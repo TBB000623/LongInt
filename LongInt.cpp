@@ -27,7 +27,7 @@ void Fast_out(u32 a)	{
 int BUFF_max=10000;
 struct LInt	{
 //elements
-	int sign;
+	short sign;
 	int d;
 	u32 *num;
 //define function
@@ -113,10 +113,10 @@ struct LInt	{
 		d=0;
 		for(i=len-1,j=0; i>=0; i--)	{
 			if(j==0)	temp=0;
-			if(j==0)	temp += (inString[i] - '0') * 1;
-			if(j==1)	temp += (inString[i] - '0') * 10;
-			if(j==2)	temp += (inString[i] - '0') * 100;
-			if(j==3)	temp += (inString[i] - '0') * 1000;
+			if(j==0)	temp += (inString[i] - '0') * 1e0;
+			if(j==1)	temp += (inString[i] - '0') * 1e1;
+			if(j==2)	temp += (inString[i] - '0') * 1e2;
+			if(j==3)	temp += (inString[i] - '0') * 1e3;
 			j++;
 			if(j==4)	{
 				j -= 4;
@@ -232,7 +232,7 @@ struct LInt	{
 		u32 *pre=this->num;
 		num=new u32[this->d];
 		for(int j=0; j<this->d; j++)	num[j]=pre[j];
-		delete[]pre;
+		delete [] pre;
 		return;
 	}
 	void print() const	{
