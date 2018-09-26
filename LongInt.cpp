@@ -1,14 +1,18 @@
-#include <iostream>	//version:2.0
+#include <iostream>	//version:2.1
 #include <cstdio>
 #include <algorithm>
 #include <queue>
 #include <vector>
 #include <cstring>
 #include <string>
+
+//#define debug
+
 typedef unsigned long long u64;
 typedef long long i64;
 typedef unsigned u32;
 
+using std::cin;
 using std::cout;
 using std::endl;
 
@@ -24,7 +28,7 @@ void Fast_out(u32 a)	{
 	} else	putchar('0'+a);
 }
 
-int BUFF_max=10000;
+int BUFF_max=1000000;
 struct LInt	{
 //elements
 	short sign;
@@ -100,7 +104,7 @@ struct LInt	{
 			*this=false;
 			return ;
 		}
-		
+
 		if(zero)	{
 			*this=0LL;
 			return ;
@@ -183,7 +187,7 @@ struct LInt	{
 			}
 			return false;
 		}
-		if(sign==0)	return false;
+		return false;
 	}
 	bool operator==(const LInt &B) const	{
 		if(sign!=B.sign)	return false;
@@ -208,6 +212,14 @@ struct LInt	{
 		LInt A(0LL);
 		*this=A;
 		return A;
+	}
+	LInt make_power_10(int num_of_zero)	{
+		if(num_of_zero<0)	return LInt(false);
+		char inString[BUFF_max]={0};
+		for(int i=1;i<=num_of_zero;i++)	inString[i]='0';
+		inString[0]='1';
+		*this=LInt(inString);
+		return LInt(inString);
 	}
 	LInt abs()	{
 		if(sign==-1)	sign=1;
@@ -248,6 +260,16 @@ struct LInt	{
 			if(num[i]<1000)	putchar('0');
 			Fast_out(num[i]);
 		}
+	}
+	LInt div2()	const	{
+		LInt ans(*this);
+		for(int i=ans.d-1;i>0;i--)	{
+			if(ans.num[i]%2)	ans.num[i]--,ans.num[i-1]+=1e4;
+			ans.num[i]/=2;
+		}
+		ans.num[0]/=2;
+		ans.sho();
+		return ans;
 	}
 //operator
 	LInt operator-() const	{
@@ -301,11 +323,11 @@ struct LInt	{
 				ans.sho();
 				return ans;
 			}
-			if(*this<D)	{
+			else	{
 				return -((-B)+(-*this));
 			}
 		}
-		if(sign==-1&&B.sign==1)	{
+		else	{
 			return B+(*this);
 		}
 	}
@@ -315,12 +337,11 @@ struct LInt	{
 		temp=*this+temp;
 		return temp;
 	}
-	LInt operator*(LInt &B) const	{
+	LInt operator*(const LInt &B) const	{
 		LInt ans(true);
+		int x,y;
 		ans.d=this->d+B.d+1;
 		ans.sign=this->sign*B.sign;
-		int i;
-		int x,y;
 		for(x=0; x<d; x++)	for(y=0; y<B.d; y++)	{
 				ans.num[x+y]+=num[x]*B.num[y];
 				ans.num[x+y+1]+=ans.num[x+y]/10000;
@@ -329,16 +350,60 @@ struct LInt	{
 		ans.sho();
 		return ans;
 	}
+	LInt operator/(const LInt &B) const	{
+		if(*this==0ull)	return LInt(false);
+		LInt ans(true),low(true),high(true),mid(true),abs_A(*this),abs_B(B);
+		abs_A.abs();	abs_B.abs();
+		low.make_power_10(4*(this->d-B.d-1));
+		high.make_power_10(4*(this->d-B.d+1));
+		while(1) {
+			mid=(low+high).div2();
+			if(mid==low)	break;
+			if(mid*abs_B<=abs_A)	low=mid;
+			else	high=mid;
+		}
+		mid.sign=this->sign*B.sign;
+		ans=mid;	ans.sho();
+		return ans;
+	}
+	inline LInt operator%(const LInt &B) const	{
+		return *this-(*this/B)*B;
+	}
+	inline LInt operator+=(const LInt &B)	{
+		return *this=*this+B;
+	}
+	inline LInt operator-=(const LInt &B)	{
+		return *this=*this-B;
+	}
+	inline LInt operator*=(const LInt &B)	{
+		return *this=*this*B;
+	}
+	inline LInt operator/=(const LInt &B)	{
+		return *this=*this/B;
+	}
+	inline LInt operator%=(const LInt &B)	{
+		return *this=*this%B;
+	}
+//special math function
+	LInt power(const LInt &base, u64 exp) const {
+		LInt ans(1ull),temp_square(base);
+		for(int i=0;(i<64)&&(1ull<<i<exp);i++,temp_square*=temp_square)	{
+#ifdef debug
+			cout<<i<<endl;
+#endif
+			if(exp&(1ull<<i))	ans*=temp_square;
+		}
+		return ans;
+	}
 };
 
 
 int main()	{
-	char in[100000];
-	scanf("%s",in);
-	LInt A(in);
-	scanf("%s",in);
-	LInt B(in);
-	(A+B).print();
+	char A[BUFF_max]={0};
+	unsigned long long B;
+	cin>>A>>B;
+	LInt LA(A),ans;
+	ans.power(LA,B).print();
 	std::cout<<std::endl;
 	return 0;
 }
