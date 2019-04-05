@@ -16,21 +16,6 @@
 
 #define Pi 3.14159265358979323846
 
-//#define debug
-using std::ostream;
-using std::cin;
-using std::cout;
-using std::endl;
-using std::complex;
-using std::vector;
-using std::string;
-using std::stack;
-
-using std::sin;
-using std::cos;
-using std::sqrt;
-using std::pow;
-
 typedef unsigned long long u64;
 typedef long long i64;
 typedef unsigned u32;
@@ -48,15 +33,26 @@ void Fast_out(u32 a)	{
 }
 int Log_2(int base) {
 	int i;
-	for(i=0;((1<<i)<base)&(i<32);i++);
+	for(i=0; ((1<<i)<base) & (i<32) ;i++);
 	return i;
 }
+namespace TBB	{
+	unsigned BUFF_max=100000;
+	using std::cin;
+	using std::cout;
+	using std::endl;
+	using std::string;
+	using std::stack;
 
-unsigned BUFF_max=100000;
-bool ERROR_stop=true;
-namespace TBB {
-	vector< complex<double> > FFT(vector< complex<double> > &X, bool flag) {
+	using std::sin;
+	using std::cos;
+	using std::sqrt;
+	using std::pow;
+	// template<typename T, size_T> FFT(const std::array<T, N> &X, bool flag) {
+	std::vector<std::complex<double> > FFT(const std::vector<std::complex<double> > &X, bool flag) {
 		//flag -> inverse flag
+		using std::complex;
+		using std::vector;
 		int L=X.size();
 		if(L==1)	return X;
 		vector< complex<double> > X1(L/2), X2(L/2);
@@ -80,13 +76,8 @@ namespace TBB {
 		u32 *num;
 	public:
 	//define function/initial
-		LInt (void )	{
-			sign=d=0;
-			num=new u32[BUFF_max];
-			memset(num,0,BUFF_max*sizeof(u32));
-		}
-		LInt (bool b)	{
-			sign=d=0;
+		LInt (void ):sign(0),d(0),num(0){}
+		LInt (bool b):sign(0),d(0)	{
 			if(b)	{
 				num=new u32[BUFF_max];
 				memset(num,0,BUFF_max*sizeof(u32));
@@ -170,7 +161,6 @@ namespace TBB {
 				if(j==4)	{j -= 4; num[d++] = temp;}
 			}
 			if(j>0)	num[d++] = temp;
-
 			this->sho();
 		}
 		LInt (string inString_)	{
@@ -183,22 +173,19 @@ namespace TBB {
 			num=new u32[d];
 			for(int i=0; i<d; i++)	num[i]=A.num[i];
 		}
-		LInt (const u32 *inNum, int k)	{
+		LInt (const u32 *inNum, int k):sign(1),d(k){
 			num= new u32[k];
 			memset(num,0,k*sizeof(u32));
-			d=k,sign=1;
 			for(int i=0; i<k; i++)	num[i]= inNum[i];
 			this->sho();
 		}
-		LInt (int cff, u32 pow)	{
-
-		}
+		// LInt (int cff, u32 pow)	{}
 	//undo function
-		~LInt()	{
+		virtual ~LInt()	{
 			if(num!=0)	delete[] num;
 		}
 	//assignment operator
-		LInt operator=(const LInt &B)	{
+		LInt & operator=(const LInt &B)	{
 			sign=B.sign;	d=B.d;
 			u32 *pt_num=num;
 			num=new u32[d];
@@ -206,17 +193,17 @@ namespace TBB {
 			if(pt_num)	delete[] pt_num;
 			return *this;
 		}
-		LInt operator=(u64 b)	{
+		LInt & operator=(u64 b)	{
 			LInt ans(b);
 			*this=ans;
 			return *this;
 		}
-		LInt operator=(i64 b)	{
+		LInt & operator=(i64 b)	{
 			LInt ans(b);
 			*this=ans;
 			return *this;
 		}
-		LInt operator=(bool b)	{
+		LInt & operator=(bool b)	{
 			LInt ans(b);
 			*this=ans;
 			return *this;
@@ -245,7 +232,7 @@ namespace TBB {
 			}
 			return false;
 		}
-		bool operator==(const LInt &B) const	{
+		bool operator==(const LInt &B) const {
 			if(sign!=B.sign)	return false;
 			if(d!=B.d)	return false;
 			for(int i=d-1; i>=0; i--)	if(num[i]!=B.num[i])	return false;
@@ -275,7 +262,7 @@ namespace TBB {
 		}
 		LInt abs()	const {
 			LInt ans(*this);
-			if(ans.sign==-1)	ans.sign=1;
+			if(ans.sign<0)	ans.sign=-ans.sign;
 			return ans;
 		}
 		LInt abs(const LInt &b) const	{
@@ -287,10 +274,9 @@ namespace TBB {
 			int i=this->d-1;
 			while(i>=0&&num[i]==0)	i--;
 			if(i<0)	{
-				if(num)delete[] num;
+				if(num)	delete[] num;
 				num=new u32[1];
-				num[0]=0;
-				sign=d=0;
+				num[0]=0;	sign=d=0;
 				return;
 			}
 			this->d=i+1;
@@ -327,6 +313,9 @@ namespace TBB {
 			}
 			return ans;
 		}
+		inline bool pstive()	const	{return sign>0;}
+		inline bool ngtive()	const	{return sign<0;}
+		inline bool zero()	const	{return sign==0;}
 			//get 10000^2d/A
 		LInt recip() const	{
 			LInt A(*this);
@@ -350,37 +339,6 @@ namespace TBB {
 			}
 			return _A;
 		}
-			//get 10000^2k/sqrt(A) when A has 2k or 2k-1 bits
-		LInt recip2() const	{
-			LInt A(*this);
-			if(A.d<=2)	{
-				if(A.d==0)	return LInt(0);
-				u32 temp;
-				if(A.d==1)	temp=A.num[0];
-				if(A.d==2)	temp=A.num[0]+A.num[1]*10000;
-				return LInt((int)(pow(10000,A.d)/std::sqrt((double)temp)));
-			}
-			int k= (A.d+1)/2;
-			LInt _A,A2k(A.num+(A.d-k),k),_A2k,_rA;
-			_A2k= A2k.recip2();
-			_A2k<<= (A.d-k)/2;
-			_A=(3*_A2k).div2()-((_A2k*_A2k*_A2k*A).div2()>>(2*A.d));
-			_rA=(LInt(1)<<(2*A.d))-A*_A*_A;
-			u64 delta;
-			if(_rA<0)	for(delta=1; _rA.sign<0; delta*=2)	{
-				LInt temp=(_A*2*-delta+delta*delta)*A;
-				_A-=LInt(delta);	_rA-=temp;
-			}	else	for(delta=1; ;delta*=2)	{
-				LInt temp=(_A*2+delta)*delta*A;
-				if(temp>_rA)	break;
-				_A+=LInt(delta);	_rA-=temp;
-			}
-			for(;delta>0;delta/=2)	{
-				LInt temp=(_A*2+delta)*delta*A;
-				if(temp<=_rA)	{_A+=LInt(delta);	_rA-=temp;}
-			}
-			return _A;
-		}
 		LInt div2()	const	{
 			LInt ans(*this);
 			for(int i=ans.d-1;i>0;i--)	{
@@ -392,7 +350,7 @@ namespace TBB {
 			return ans;
 		}
 	//Operator Function
-		LInt operator<<(int k) const {
+		const LInt operator<<(int k) const {
 			if(k<0)	return LInt(1);
 			if(*this==0)	return LInt(0);
 			LInt ans(false);
@@ -402,7 +360,7 @@ namespace TBB {
 			ans.num=_num;	ans.d=d+k;	ans.sign=sign;
 			return ans;
 		}
-		LInt operator>>(int k) const {
+		const LInt operator>>(int k) const {
 			if(k<0)	return LInt(1);
 			if(d<=k)	return LInt(0);
 			LInt ans(false);
@@ -412,12 +370,12 @@ namespace TBB {
 			ans.num=_num;	ans.d=d-k;	ans.sign=sign;
 			return ans;
 		}
-		LInt operator-() const	{
+		const LInt operator-() const	{
 			LInt ans(*this);
 			ans.sign=-ans.sign;
 			return ans;
 		}
-		LInt operator+(const LInt &B) const	{
+		const LInt operator+(const LInt &B) const	{
 			if(B.sign==0)	return *this;
 			if(this->sign==0)	return B;
 			if(sign==B.sign)	{
@@ -471,13 +429,13 @@ namespace TBB {
 				return B+(*this);
 			}
 		}
-		LInt operator-(const LInt &B) const	{
+		const LInt operator-(const LInt &B) const	{
 			LInt temp;
 			temp=-B;
 			temp=*this+temp;
 			return temp;
 		}
-		LInt operator*(int B)	{
+		const LInt operator*(int B) const	{
 			LInt ans(true),A(*this);
 			ans.sign= A.sign* (B<0?-1:(B>0)?1:0);
 			if(B<0)	B=-B;
@@ -496,7 +454,9 @@ namespace TBB {
 			ans.sho();
 			return ans;
 		}
-		LInt operator*(const LInt &B) const {
+		const LInt operator*(const LInt &B) const {
+			using std::complex;
+			using std::vector;
 			LInt ans(true);
 			int x,y;
 			int N=1<<(Log_2(this->d+B.d-1));
@@ -520,7 +480,26 @@ namespace TBB {
 			ans.sho();
 			return ans;
 		}
-		LInt operator/(const LInt &B) const	{
+		const LInt operator/(int B) const	{
+			if(B==2)	return this->div2();
+			if(B==0)	{ERROR(2); return LInt(false);}
+			if(*this==0)	return LInt(0);
+
+			LInt ans;	ans.d=d;
+			ans.sign= sign* (B>0?1:-1);
+			ans.num= new u32[d];
+			memset(ans.num, 0, d*sizeof(u32));
+			u32 abs_B=(B<0?-B:B);	u64 temp=0;
+			for(int i=d-1; i>=0; i--)	{
+				temp*= 10000;
+				temp+= num[i];
+				ans.num[i]= temp/abs_B;
+				temp%= abs_B;
+			}
+			ans.sho();
+			return ans;
+		}
+		const LInt operator/(const LInt &B) const	{
 			if(d<25)	{
 				if(*this==0)	return LInt(0);
 				if(B==0)	{ERROR(2); return LInt(false);}
@@ -539,7 +518,7 @@ namespace TBB {
 				ans=mid;	ans.sho();
 				return ans;
 			}
-			{
+			else	{
 				LInt X=(*this).abs(),Y=B.abs();
 				if(Y==0)	{ERROR(2);return LInt(false);}
 				if(X<Y)	return LInt(0);
@@ -558,12 +537,19 @@ namespace TBB {
 				return quoti;
 			}
 		}
-		LInt operator^(const LInt &B) const {
-			if(*this==0)	return LInt(0);
-			if(B==0)	{return LInt(false);}
-			LInt ans(true),abs_A=abs(*this),abs_B=abs(B);
+		const int  operator%(int B) const	{
+			if(B==0)	{ERROR(2); return 0;}
+			if(*this==0)	return 0;
+			u32 abs_B=(B<0?-B:B);	u64 temp=0;
+			for(int i=d-1; i>=0; i--)	{
+				temp*= 10000;
+				temp+= num[i];
+				temp%= abs_B;
+			}
+			temp*= d*(B<0?-1:1);
+			return temp;
 		}
-		inline LInt operator%(const LInt &B) const	{
+		inline const LInt operator%(const LInt &B) const	{
 			return *this-(*this/B)*B;
 		}
 		inline LInt operator<<=(int k)	{
@@ -578,8 +564,14 @@ namespace TBB {
 		inline LInt operator-=(const LInt &B)	{
 			return *this=*this-B;
 		}
+		inline LInt operator*=(int p)	{
+			return *this=(*this)*p;
+		}
 		inline LInt operator*=(const LInt &B)	{
 			return *this=*this*B;
+		}
+		inline LInt operator/=(int p)	{
+			return *this=(*this)/p;
 		}
 		inline LInt operator/=(const LInt &B)	{
 			return *this=*this/B;
@@ -597,7 +589,7 @@ namespace TBB {
 		friend LInt operator*(int A, const LInt &B)	{
 			 return B*A;
 		}
-		friend ostream & operator<<(ostream &os, const LInt &A){
+		friend ostream & operator<<(ostream &os, const LInt &A)	{
 			if(A.sign==0)	{
 				os.put('0');
 			}	else	{
@@ -612,44 +604,11 @@ namespace TBB {
 			}
 			return os;
 		}
-	//Special Math Function
-		LInt power(const LInt &base, u64 exp) {
-			LInt ans(1),temp_square(base);
-			for(int i=0; (i<64)&&(1ull<<i<=exp); i++,temp_square*=temp_square)	{
-				if(exp&(1ull<<i))	ans*=temp_square;
-			}
-			return ans;
+	// converse to other classical type
+		explicit operator bool() const	{
+			return *this==0;
 		}
 	};
-	LInt abs(const LInt &B)	{
-		LInt ans(B);
-		if (ans.sign==-1) ans.sign=1;
-		return ans;
-	};
-	LInt sqrt(const LInt &base) {
-		if(base.sign<0)	{ERROR(1);return LInt(false);}
-		if(base.sign==0)	return LInt(0);
-		LInt ans=(base*base.recip2())>>(base.d);
-		LInt R=base-ans*ans;
-		u64 delta;
-		for(delta=1;;delta*=2)	{
-			LInt dR=delta*(2*ans+delta);
-			if(dR>R)	break;
-			R-=dR;	ans+=delta;
-		}
-		for(;delta>0;delta/=2)	{
-			LInt dR=delta*(2*ans+delta);
-			if(dR<=R)	{R-=dR;	ans+=delta;}
-		}
-		return ans;
-	}
-/*	extern LInt make_power_10(int num_of_zero) {
-		if(num_of_zero<0)	return LInt(false);
-		char inString[BUFF_max]={0};
-		for(int i=1;i<=num_of_zero;i++)	inString[i]='0';
-		inString[0]='1';
-		return LInt(inString);
-	};*/
 }
 
 
