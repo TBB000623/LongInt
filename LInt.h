@@ -1,14 +1,13 @@
 #ifndef TBBLINT_H
 #define TBBLINT_H
 
-#include <iostream>	//version:2.4
+#include <iostream>	//version:2.4.1
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
 #include <algorithm>
 #include <complex>
 #include <vector>
-#include <stack>
 #include <cctype>
 #include <cstring>
 #include <string>
@@ -16,35 +15,39 @@
 typedef unsigned long long u64;
 typedef long long i64;
 typedef unsigned u32;
-
-void Fast_out(u32 a)	{
-	if(a==0) {
-		putchar('0');
-		return;
-	}
-	if(a>9) {
-		Fast_out(a/10);
-		putchar('0'+a%10);
-	} else	putchar('0'+a);
-}
-int Log_2(int base) {
-	int i;
-	for(i=0; ((1<<i)<base) & (i<32) ;i++);
-	return i;
-}
 namespace tbb	{
 	const double Pi= 3.14159265358979323846;
 	using std::cin;
 	using std::cout;
 	using std::endl;
 	using std::string;
-	using std::stack;
 
 	using std::sin;
 	using std::cos;
 	using std::sqrt;
 	using std::pow;
 
+	void Fast_out(u32 a)	{
+		if(a==0) {
+			putchar('0');
+			return;
+		}
+		if(a>9) {
+			Fast_out(a/10);
+			putchar('0'+a%10);
+		} else	putchar('0'+a);
+	}
+	inline void Fast_0_out(u32 a, int len= 4)	{
+		if(len>=2)	if(a<10)	putchar('0');
+		if(len>=3)	if(a<100)	putchar('0');
+		if(len>=4)	if(a<1000)	putchar('0');
+		Fast_out(a);
+	}
+	int Log_2(int base) {
+		int i;
+		for(i=0; ((1<<i)<base) & (i<32) ;i++);
+		return i;
+	}
 	// template<typename T, size_T> FFT(const std::array<T, N> &X, bool flag) {
 	std::vector<std::complex<double> > FFT(const std::vector<std::complex<double> > &X, bool flag) {
 		//flag -> inverse flag
@@ -66,6 +69,12 @@ namespace tbb	{
 		if(flag)    for(int i=0; i<L; i++)  A[i]/=2;
 		return A;
 	}
+	inline int s2i(const char *begin, const char *end) {//converse string to int
+		int tmp= 0, sig= 1;
+		if(*begin=='+'||*begin=='-')	sig= (*(begin++)=='+')?1:-1;
+		for(const char *t= end-1; t>= begin; t--)	tmp= tmp*10+ (*t-'0');
+		return tmp*sig;
+    }
 	struct LInt	{
 	//elements
 		short sign;
@@ -73,10 +82,13 @@ namespace tbb	{
 		u32 *num;
 	//define function/initial
 		LInt (void ):sign(0),d(0),num(0){}
-		LInt (bool b):sign(0),d(0)	{
-			if(b)	{
-				num=new u32[0];
-			} else	num=0;
+		LInt (bool b, int code= 0):sign(0),d(0)	{
+			if(b)	{num=new u32[0];}
+			else	{
+				num= 0;
+				if(code== 1)	sign= 2;
+				if(code== -1)	sign= -2;
+			}
 		}
 		LInt (int b)	{
 			if(b==0)	{sign=d=0; num=new u32[0];}
@@ -148,26 +160,8 @@ namespace tbb	{
 				if(i%4==0)	num[i/4]= temp, temp= 0;
 			}
 		}
-		LInt (const string &inString_)	{
-			const char *inString= inString_.c_str();
-			int i, len;
-			bool flag=true, minus=false;
-			if(inString[0]=='-')	{minus=true; inString++;}
-			else	if(inString[0]=='+')	{minus=false;	inString++;}
-			len=strlen(inString);
-			if(strcmp(inString, "inf")==0)	{sign= minus? -2: 2;	d=0;	num=0;	return ;}
-			for(i=0; i<len&&flag; i++)	flag= flag&&('0'<=inString[i]&&inString[i]<='9');
-			if(!flag||len== 0)	{d=sign=0;	num=0; return ;}
-			for(; *inString=='0'; inString++, len--);
-			if(*inString=='\0')	{d=sign=0;	num= new u32[0]; return ;}
-			d= (len+3)/4;	num= new u32[d]();
-			sign= minus? -1: 1;
-			int j, temp;
-			for(temp=0, i=len, j=0; j<len; j++)	{
-				temp= temp*10 + inString[j]-'0';
-				i-=1;
-				if(i%4==0)	num[i/4]= temp, temp= 0;
-			}
+		LInt (const string &inString_):num(0)	{
+			*this= inString_.c_str();
 		}
 		LInt (const LInt &A):sign(A.sign), d(A.d)	{
 			num= new u32[d];
@@ -181,9 +175,7 @@ namespace tbb	{
 			this->sho();
 		}
 	//undo function
-		virtual ~LInt()	{
-			if(num!=0)	delete[] num;
-		}
+		virtual ~LInt() {if(num!=0)	delete[] num;}
 	//assignment operator
 		LInt & operator=(const LInt &B)	{
 			sign=B.sign;	d=B.d;
@@ -192,8 +184,20 @@ namespace tbb	{
 			else	{num= new u32[d];	for(int i=0; i<d; i++)	num[i]=B.num[i];}
 			return *this;
 		}
+		LInt & operator=(const char *inString) {
+			LInt temp(inString);
+			d= temp.d; sign= temp.sign;
+			if(num!=0)	delete[] num;
+			num= temp.num; temp.num=0;
+			return *this;
+		}
+		inline LInt & operator=(bool b)  {return *this=LInt(b);}
+        inline LInt & operator=(int i)  {return *this= LInt(i);}
+		inline LInt & operator=(i64 i)	{return *this= LInt(i);}
+		inline LInt & operator=(u64 u)	{return *this= LInt(u);}
 	//compare operator
-		bool operator<(const LInt &B) const	{//
+		bool operator<(const LInt &B) const	{
+
 			const LInt &A= *this;
 			if(A.isNaN()||B.isNaN())	return false;
 			if(A.sign<B.sign)	return true;
@@ -267,6 +271,7 @@ namespace tbb	{
 			if(sign==2||sign==-2)	{
 				if(sign==-2)	putchar('-');
 				printf("inf");
+				return ;
 			}
 			if(sign==0)	{
 				if(num==0)	printf("NaN");
@@ -275,12 +280,7 @@ namespace tbb	{
 			}
 			if(sign==-1)	putchar('-');
 			Fast_out(num[d-1]);
-			for(int i=d-2; i>=0; i--)	{
-				if(num[i]<10)	putchar('0');
-				if(num[i]<100)	putchar('0');
-				if(num[i]<1000)	putchar('0');
-				Fast_out(num[i]);
-			}
+			for(int i=d-2; i>=0; i--)	Fast_0_out(num[i]);
 		}
 		string print_str()	const	{
 			if(sign==0)	return num==0?string("NaN"):string("0");
@@ -318,11 +318,19 @@ namespace tbb	{
 			cout<< "show LInt end.\n";
 		}
 		inline bool isNaN()	const	{return (num==0)&&(d==0)&&(sign==0);}
-		inline bool pstive()	const	{return sign>0;}
-		inline bool ngtive()	const	{return sign<0;}
+		inline bool positive()	const	{return sign>0;}
+		inline bool negative()	const	{return sign<0;}
 		inline bool isinf()	const	{return sign==2||sign==-2;}
 		inline bool zero()	const	{return sign==0&&num!=0;}
-		//get 10000^2d/A while A >=0
+		inline bool meanless()	const	{return isNaN()||isinf();}
+		inline bool abnormal()	const	{return zero()||isinf()||isNaN();}
+		friend void swap(LInt &A, LInt &B)	{
+			int temp_d; short temp_sign;	u32* temp_num;
+			temp_d= A.d;	A.d= B.d;	B.d= temp_d;
+			temp_sign= A.sign;	A.sign= B.sign;	B.sign= temp_sign;
+			temp_num= A.num;	A.num= B.num;	B.num= temp_num;
+		}
+	private://get 10000^2d/A while A >=0
 		LInt recip() const	{
 			LInt A(*this);
 			if(A.sign<0)	{return LInt(false);}
@@ -347,6 +355,7 @@ namespace tbb	{
 			}
 			return _A;
 		}
+	public:
 		LInt div2()	const	{
 			if(sign==2||sign==-2||sign==0)	return *this;
 			LInt ans(*this);
@@ -360,7 +369,7 @@ namespace tbb	{
 		}
 	//Operator Function
 		const LInt operator<<(int k) const {
-			if(sign==2||sign==-2||sign==0)	return *this;
+			if(abnormal())	return *this;
 			if(k<0)	return LInt(false);
 			if(*this==0)	return LInt(0);
 			LInt ans(false);
@@ -370,7 +379,7 @@ namespace tbb	{
 			return ans;
 		}
 		const LInt operator>>(int k) const {
-			if(sign==2||sign==-2||sign==0)	return *this;
+			if(abnormal())	return *this;
 			if(k<0)	return LInt(false);
 			if(d<=k)	return LInt(0);
 			LInt ans(false);
@@ -452,6 +461,7 @@ namespace tbb	{
 			if(B==0&&(A.sign==2||A.sign==-2))	return false;
 			if(A.sign==2||A.sign==-2)	return (B>0)?A:-A;
 			if(A.zero()||B==0)	return 0;
+			if(B==1||B==-1)	return B==1?A:-A;
 			LInt ans;
 			ans.num= new u32[A.d+3]();
 			ans.sign= A.sign* (B<0?-1:(B>0)?1:0);
@@ -509,7 +519,7 @@ namespace tbb	{
 			if(A.isNaN())	return false;
 			if(A==0&&B==0)	return false;
 			if(A==0)	return 0;
-			if(B==0)	return A.pstive()?"inf":"-inf";
+			if(B==0)	return A.positive()?"inf":"-inf";
 			if(A.isinf())	return (B>=0)?A:-A;
 
 			LInt ans;	ans.d=d;
@@ -529,10 +539,10 @@ namespace tbb	{
 			const LInt &A= *this;
 			if(A.isNaN()||B.isNaN())	return false;
 			if((A==0&&B==0)||(A.isinf()&&B.isinf()))	return false;
-			if(A.isinf())	return (!B.ngtive())?A:-A;
+			if(A.isinf())	return (!B.negative())?A:-A;
 			if(B.isinf())	return 0;
 			if(A==0)	return 0;
-			if(B==0)	return A.pstive()?"inf":"-inf";
+			if(B==0)	return A.positive()?"inf":"-inf";
 			if(A.d<25)	{
 				LInt mid;
 				LInt high=LInt(1)<<(A.d-B.d+1);
@@ -583,39 +593,79 @@ namespace tbb	{
 		const LInt operator%(const LInt &B) const	{
 			const LInt &A= *this;
 			if(A.isNaN()||B.isNaN()||A.isinf()||B==0)	return false;
-			if(B.isinf())	return B.pstive()?A:-A;
+			if(B.isinf())	return B.positive()?A:-A;
 			if(A==0)	return 0;
 			return *this-(*this/B)*B;
 		}
-		inline LInt & operator<<=(int k)	{
-			return *this=*this<<k;
+		LInt & operator<<=(int k)	{
+			LInt temp= *this<<k;
+			if(num!=0)	delete[] num;
+			num= temp.num;	temp.num= 0;
+			d= temp.d;	sign= temp.sign;
+			return *this;
 		}
-		inline LInt & operator>>=(int k)	{
-			return *this=*this>>k;
+		LInt & operator>>=(int k)	{
+			LInt temp= *this>>k;
+			if(num!=0)	delete[] num;
+			num= temp.num;	temp.num= 0;
+			d= temp.d;	sign= temp.sign;
+			return *this;
 		}
-		inline LInt & operator+=(const LInt &B)	{
-			return *this=*this+B;
+		LInt & operator+=(const LInt &B)	{
+			LInt temp= *this+ B;
+			if(num!=0)	delete[] num;
+			num= temp.num;	temp.num= 0;
+			d= temp.d;	sign= temp.sign;
+			return *this;
 		}
-		inline LInt & operator-=(const LInt &B)	{
-			return *this=*this-B;
+		LInt & operator-=(const LInt &B)	{
+			LInt temp= *this- B;
+			if(num!=0)	delete[] num;
+			num= temp.num;	temp.num= 0;
+			d= temp.d;	sign= temp.sign;
+			return *this;
 		}
-		inline LInt & operator*=(int p)	{
-			return *this=(*this)*p;
+		LInt & operator*=(int p)	{
+			LInt temp= *this* p;
+			if(num!=0)	delete[] num;
+			num= temp.num;	temp.num= 0;
+			d= temp.d;	sign= temp.sign;
+			return *this;
 		}
-		inline LInt & operator*=(const LInt &B)	{
-			return *this=*this*B;
+		LInt & operator*=(const LInt &B)	{
+			LInt temp= *this* B;
+			if(num!=0)	delete[] num;
+			num= temp.num;	temp.num= 0;
+			d= temp.d;	sign= temp.sign;
+			return *this;
 		}
-		inline LInt & operator/=(int p)	{
-			return *this=(*this)/p;
+		LInt & operator/=(int p)	{
+			LInt temp= *this/ p;
+			if(num!=0)	delete[] num;
+			num= temp.num;	temp.num= 0;
+			d= temp.d;	sign= temp.sign;
+			return *this;
 		}
-		inline LInt & operator/=(const LInt &B)	{
-			return *this=*this/B;
+		LInt & operator/=(const LInt &B)	{
+			LInt temp= *this/ B;
+			if(num!=0)	delete[] num;
+			num= temp.num;	temp.num= 0;
+			d= temp.d;	sign= temp.sign;
+			return *this;
 		}
-		inline LInt & operator%=(int B)	{
-			return *this=*this%B;
+		LInt & operator%=(int B)	{
+			LInt temp= *this% B;
+			if(num!=0)	delete[] num;
+			num= temp.num;	temp.num= 0;
+			d= temp.d;	sign= temp.sign;
+			return *this;
 		}
-		inline LInt & operator%=(const LInt &B)	{
-			return *this=*this%B;
+		LInt & operator%=(const LInt &B)	{
+			LInt temp= *this% B;
+			if(num!=0)	delete[] num;
+			num= temp.num;	temp.num= 0;
+			d= temp.d;	sign= temp.sign;
+			return *this;
 		}
 		inline LInt & operator++(void)	{
 			return *this+=1;
@@ -632,6 +682,9 @@ namespace tbb	{
 			LInt b= *this;
 			*this-=1;
 			return b;
+		}
+		inline u32 & operator[](int k) const	{
+			return num[k];
 		}
 	//Friend Function for Other Classical Class
 		friend LInt operator+(int A, const LInt &B)	{
@@ -663,31 +716,21 @@ namespace tbb	{
 			return os;
 		}
 		friend std::istream & operator>>(std::istream &is, LInt &A)	{
+			using std::isdigit;
 			is>>std::ws;
-			if(!is)	{is.setstate(std::ios_base::failbit);	A= 0;	return is;}
-			if(is.peek()==-1)	{is.setstate(std::ios_base::eofbit);	A= 0;	return is;}
+			{
+				if(is.peek()==-1)	{is.setstate(std::ios_base::eofbit);	A= 0;	return is;}
+				if(!is)	{is.setstate(std::ios_base::failbit);	A= 0;	return is;}
+				char t= is.peek();
+				while(t!='-'&&!isdigit(t)&&t!=-1)	{
+					is.get();	t= is.peek();
+				}
+				if(t==-1)	{is.setstate(std::ios_base::failbit);	A= 0;	return is;}
+			}
 			char sign= is.peek();
 			if(sign=='-'||sign=='+')	is.get();
 			else	sign= '0';
-			// NaN or inf?
-			if(is.peek()=='N'||is.peek()=='n'||is.peek()=='I'||is.peek()=='i')	{
-				char in[4]= {};	int bit;
-				for(bit=0; bit<3 && is.good(); bit++)	in[bit]= is.get();
-				if(sign=='0'&&(strcmp(in, "NaN")==0||strcmp(in, "nan")==0))	{
-					A= false;
-					return is;
-				}
-				if(strcmp(in, "inf")==0||strcmp(in, "Inf")==0)	{
-					if(sign=='-')	A= "-inf";
-					else	A= "inf";
-					return is;
-				}
-				is.setstate(std::ios_base::goodbit);
-				for(; bit>0; )	if(!is.putback(in[--bit]))	break;
-				is.setstate(std::ios_base::failbit);
-				A= 0;
-				return is;
-			}
+			// NaN or inf?	//No. Like the input of float, refuse NaN
 			//just no any suitable input?
 			if(!isdigit(is.peek()))	{
 				if(sign=='+'||sign=='-')	is.unget();
@@ -700,6 +743,7 @@ namespace tbb	{
 			return is;
 		}
 	// converse to other classical type
+	#if __cplusplus >= 201103L
 		explicit operator bool() const	{
 			return isinf()||isNaN();
 		}
@@ -709,7 +753,20 @@ namespace tbb	{
 			if(sign<0)	temp= -temp;
 			return temp;
 		}
+	#endif
 	};
+	LInt mul_pow10(const LInt &A, int k)    {
+        if(A.isNaN()||A.zero()||A.isinf())  return A;
+        int t1;
+        switch(k%4) {
+            case(0):    t1= 1;  break;
+            case(1):    t1= 10; break;
+            case(2):    t1= 100;break;
+            default:    t1=1000;break;
+        }
+        return (A* t1)<<(k/4);
+    }
+	LInt pow10(int k)   {return mul_pow10(1,k);}
 }
 
 
