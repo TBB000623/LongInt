@@ -1,4 +1,9 @@
-#ifndef TBBLMAT_H //LMath.h ver:2.4.2
+// #define debug
+#ifdef debug
+#include "LFloat.h"
+#endif
+
+#ifndef TBBLMAT_H //LMath.h ver:3.1
 #define TBBLMAT_H
 
 #include "LInt.h"
@@ -16,14 +21,20 @@ namespace tbb {
             u32 temp;
             if(A.d==1)	temp=A.num[0];
             else    	temp=A.num[0]+A.num[1]*10000;
-            return int(pow(10000,A.d)/std::sqrt(double(temp)));
+            return int(100000000/std::sqrt(double(temp)));
         }
-        int k= (A.d+1)/2;
-        LInt _A, A2k(A.num+(A.d-k),k),_A2k,_rA;
+        if(A.d<=4)  {
+            double temp= 0;
+            for(int i= A.d-1; i>=0; i--)    temp= 10000* temp+ A.num[i];
+            return u64(1e16/std::sqrt(temp));
+        }
+        int _2n= (A.d%2==0)?A.d:A.d+1;
+        int _2k= (_2n+2)/4*2;
+        LInt _A, A2k(A.num+(_2n-_2k), _2k+A.d-_2n),_A2k,_rA;
         _A2k= recip_2(A2k);
-        _A2k<<= (A.d-k)/2;
-        _A=(3*_A2k).div2()-((_A2k*_A2k*_A2k*A).div2()>>(2*A.d));
-        _rA=(LInt(1)<<(2*A.d))-A*_A*_A;
+        _A2k<<= (_2n-_2k)/2;
+        _A=(3*_A2k).div2()-((_A2k*_A2k*_A2k*A).div2()>>(2*_2n));
+        _rA=(LInt(1)<<(2*_2n))-A*_A*_A;
         u64 delta;
         if(_rA<0)	for(delta=1; _rA.sign<0; delta*=2)	{
             LInt temp=(_A*2*-delta+delta*delta)*A;
@@ -39,11 +50,12 @@ namespace tbb {
         }
         return _A;
     }
-    LInt sqrt(const LInt &base) {
+    const LInt sqrt(const LInt &base) {
 		if(base.isNaN()||base.sign<0)	return false;
         if(base.sign==2)    return base;
 		if(base.sign==0)	return 0;
-		LInt ans= (base*recip_2(base))>>(base.d);
+        int _2n= (base.d%2==0)? base.d: base.d+1;
+		LInt ans= (base*recip_2(base))>>_2n;
 		LInt R=base-ans*ans;
 		u64 delta;
 		for(delta=1;;delta*=2)	{
@@ -57,7 +69,7 @@ namespace tbb {
 		}
 		return ans;
 	}
-    LInt pow(const LInt &A, int k)  {
+    const LInt pow(const LInt &A, int k)  {
         if((A==0&&k==0)||A.isNaN())  return false;
         if(A.isinf()&&k>=0)   {
             if(k==0)    return false;
@@ -75,7 +87,7 @@ namespace tbb {
         if(k%2) return temp*temp*A;
         else    return temp*temp;
     }
-    LInt powrt(const LInt &A, int k)  {
+    const LInt powrt(const LInt &A, int k)  {
         if(A.isNaN()||k<=0)   return false;
         if(A.zero())    return 0;
         if(A.negative()&&k%2==0)  return false;
@@ -105,7 +117,7 @@ namespace tbb {
         }
         return x;
     }
-    LInt gcd(LInt a, LInt b)  {
+    const LInt gcd(LInt a, LInt b)  {
         if(a.isNaN()||b.isNaN())    return false;
         LInt pow= 1;
 		int div= 0;
@@ -120,8 +132,19 @@ namespace tbb {
         }
         return a* pow;
     }
-    LInt lcd(const LInt &a, const LInt &b)  {
+    const LInt lcd(const LInt &a, const LInt &b)  {
         return (a*b)/gcd(a,b);
     }
+    #ifdef TBBLFLT_H
+        const LFloat sqrt(const LFloat& A) {
+            if(A.negative()) return LFloat(LInt(false), 0);
+            if(A.abnormal()) return A;
+            const int n= tbb::_LFloat_prec;
+            LInt u= A.base; i64 t= A.pow;
+            t-=(2*n-u.d);   u<<=(2*n-u.d);
+            if(t%2!=0)  t++, u>>=1;
+            return LFloat(sqrt(u), t/2);
+        }
+    #endif
 }
 #endif
