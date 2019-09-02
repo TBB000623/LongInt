@@ -3,7 +3,7 @@
 #include "LFloat.h"
 #endif
 
-#ifndef TBBLMAT_H //LMath.h ver:3.1
+#ifndef TBBLMAT_H //LMath.h ver:3.1.1
 #define TBBLMAT_H
 
 #include "LInt.h"
@@ -83,9 +83,12 @@ namespace tbb {
             for(lnz=0; lnz<A.d&&A.num[lnz]==0; lnz++);
             return pow(A>>lnz,k)<<(lnz*k);
         }
-        LInt temp= pow(A, k/2);
-        if(k%2) return temp*temp*A;
-        else    return temp*temp;
+        LInt S= 1, temp= A;
+        for(int i=1; i<=k; i<<=1)   {
+            if(i&k) S*= temp;
+            temp*= temp;
+        }
+        return S;
     }
     const LInt powrt(const LInt &A, int k)  {
         if(A.isNaN()||k<=0)   return false;
