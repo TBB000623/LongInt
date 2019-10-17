@@ -1,4 +1,4 @@
-// #define debug
+#define debug
 #ifdef debug
 #include "LFloat.h"
 #endif
@@ -8,6 +8,7 @@
 
 #include "LInt.h"
 namespace tbb {
+    const LInt powrt(const LInt&, int);
     LInt abs(const LInt &B)	{
 		LInt ans(B);
 		if (B.sign<0) ans.sign=-B.sign;
@@ -85,40 +86,66 @@ namespace tbb {
         }
         LInt S= 1, temp= A;
         for(int i=1; i<=k; i<<=1)   {
+			temp= (i==1)?A: temp*temp;
             if(i&k) S*= temp;
-            temp*= temp;
         }
         return S;
     }
-    const LInt powrt(const LInt &A, int k)  {
-        if(A.isNaN()||k<=0)   return false;
+    const LInt recip_m(const LInt &A, int m)    {
+        if(A.abnormal())    return A;
+        if(A.d<=m)  return (powrt(A, m)<<m)/A;
+        int n= (A.d+m-1)/m;
+        int k= (n+1)/2;
+        LInt Ak(A.num+m*(n-k), A.d-m*(n-k));
+        LInt _Ak= recip_m(Ak, m);   _Ak<<= n-k;
+        LInt _AN= pow(A, m-1), base= LInt(n*m*m);
+        LInt _A= (m+1)*_Ak/m- ((_AN* pow(_Ak, m+1)/ m)>>(n*m*m));
+        u64 delta= 1;
+        if(_AN* pow(_A, m)< base)   for(;;delta<<=1)    {
+            LInt _Ap= _A+ delta;
+            if(_AN* pow(_Ap, m)> base)  break;
+            swap(_A, _Ap);
+        }   else    for(;;delta<<=1)    {
+            _A-= delta;
+            if(_AN* pow(_A, m)<= base)  break;
+        }
+        do {
+            delta>>=1;
+            LInt _Ap= _A+ delta;
+            if(_AN* pow(_Ap, m)> base)  continue;
+            swap(_A, _Ap);
+        } while(delta>0);
+        return _A;
+    }
+    const LInt powrt(const LInt &A, int m)  {
+        if(A.isNaN()||m<=0)   return false;
         if(A.zero())    return 0;
-        if(A.negative()&&k%2==0)  return false;
+        if(A.negative()&&m%2==0)  return false;
         if(A.isinf()) return A;
-        LInt x0= pow10(4*(A.d-1)/k), x;
-        while(true) {
-            x= ((k+1)*x0 - pow(x0, k+1)/A)/k;
-            if(x==x0)    break;
-            x0= x;
+        if(A.negative()&&m%2==1)    return -powrt(-A, m);
+        if(A==1)    return 1;
+        if(A.d<=m)  {
+            int up= 10000, down= 1, mid= (up+down)/2;
+            while(up-down>1) {
+                LInt a= pow(LInt(mid), m);
+                if(a==A)    return mid;
+                (a<A? down: up)= mid;
+                mid= (up+down)/2;
+            }
+            return down;
         }
-        const LInt &P= A;
-        LInt step= 1;
-        if(pow(x,k)> A) while(true) {
-            LInt Q= pow(x-step, k); x-= step;
-            if(Q<= P)   break;
-            step*=2;
+        int n= (A.d+m-1)/m;
+        LInt ans= (A* recip_m(A, m))>>(n*m);
+        u64 delta= 1;
+        for(delta=1; ; delta<<= 1)  {
+            if(pow(ans+delta, m)>A) break;
+            ans+= delta;
         }
-        else    while(true) {
-            LInt Q= pow(x+step, k);
-            if(Q<= P)  x+=step, step*=2;
-            else    break;
+        for(;delta>0 ; delta>>=1)   {
+            if(pow(ans+delta, m)>A) continue;
+            ans+= delta;
         }
-        while(step>0)   {
-            LInt Q= pow(x+step, k);
-            if(Q<= P)  x+=step;
-            step/=2;
-        }
-        return x;
+        return ans;
     }
     const LInt gcd(LInt a, LInt b)  {
         if(a.isNaN()||b.isNaN())    return false;
@@ -147,6 +174,21 @@ namespace tbb {
             t-=(2*n-u.d);   u<<=(2*n-u.d);
             if(t%2!=0)  t++, u>>=1;
             return LFloat(sqrt(u), t/2);
+        }
+        const LFloat pow(const LFloat& A, int n) {
+            if(n<0) return LFloat(1.0)/pow(A, -n);
+            if(A.isNaN()||(A.meanless()&&n==0))   return false;
+            if(A.isinf())    {return (A.negative()&&n%2==0)? -A: A;}
+            if(A.zero())    return A;
+            LFloat ans= 1, base= A;
+            for(unsigned l=1; l<=unsigned(n); l<<=1)   {
+                if(l&n) ans= ans* base;
+                base= base* base;
+            }
+            return ans;
+        }
+        const LFloat exp(const LFloat& A)   {
+            return false;
         }
     #endif
 }
