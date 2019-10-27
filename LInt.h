@@ -110,8 +110,8 @@ namespace tbb	{
 			if(b)	{num=new u32[0];}
 			else	{
 				num= 0;
-				if(code== 1)	sign= 2;
-				if(code== -1)	sign= -2;
+				if(code>0)	sign= 2;
+				if(code<0)	sign= -2;
 			}
 		}
 		LInt (int b)	{
@@ -792,6 +792,5 @@ namespace tbb	{
     }
 	LInt pow10(int k)   {return mul_pow10(1,k);}
 }
-
 
 #endif
