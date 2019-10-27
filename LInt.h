@@ -1,7 +1,7 @@
 #ifndef TBBLINT_H
 #define TBBLINT_H
 
-#include <iostream>	//version:3.0.1
+#include <iostream>	//version:3.1.2
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
@@ -43,30 +43,54 @@ namespace tbb	{
 		if(len>=4)	if(a<1000)	putchar('0');
 		Fast_out(a);
 	}
+	inline std::string Fast_0_out_str(u32 a, int len= 4)	{
+		string ans;
+		if(len>=2)	if(a<10)	ans+='0';
+		if(len>=3)	if(a<100)	ans+='0';
+		if(len>=4)	if(a<1000)	ans+='0';
+		ans+= a;
+		return ans;
+	}
 	int Log_2(int base) {
 		int i;
 		for(i=0; ((1<<i)<base) & (i<32) ;i++);
 		return i;
+	}
+	inline int higdgst(int A)	{
+		if(A<0)	A= -A;
+		while(A/10!=0)	A/=10;
+		return A;
 	}
 	// template<typename T, size_T> FFT(const std::array<T, N> &X, bool flag) {
 	std::vector<std::complex<double> > FFT(const std::vector<std::complex<double> > &X, bool flag) {
 		//flag -> inverse flag
 		using std::complex;
 		using std::vector;
+		typedef complex<double> cmxd;
 		int L=X.size();
 		if(L==1)	return X;
-		vector< complex<double> > X1(L/2), X2(L/2);
-		vector< complex<double> > A1(L/2), A2(L/2), A(L);
-		for(int i=0; i<L/2; i++)	X1[i]= X[2*i], X2[i]= X[2*i+1];
-		A1= FFT(X1, flag);	A2= FFT(X2, flag);
-		complex<double> w0(cos(2*Pi/L), sin(2*Pi/L)),w(1,0);
-		if(flag)	w0=conj(w0);
-		for(int i=0; i<L/2; i++, w*=w0)	{
-			complex<double> q= A2[i]*w;
-			A[i]	= A1[i]+q;
-			A[i+L/2]= A1[i]-q;
+		static const int vol= 262144;
+    	static bool pre_init= true;
+    	static cmxd root[vol+1];
+		if(pre_init)    {
+        	for(int i=0; i<=vol; i++) root[i]= exp(cmxd(0, 2*Pi/vol*i));
+        	pre_init= false;
+    	}
+		int* rev;   rev= new int [L];	rev[0]= 0, rev[1]= L/2;
+    	{for(int i=2; i<L; i++)  rev[i]=(rev[i&1])|(rev[i>>1]>>1);}
+		vector< complex<double> > A(L);
+		for(int i=0; i<L; i++)	A[i]= X[rev[i]];
+		for(int size=2; size<=L; size<<=1)	{
+			for(int k=0; k<L; k+=size)	{
+				for(int i=0; i<size/2; i++)	{
+					cmxd R= (!flag)? root[vol/size*i]: root[vol- vol/size*i];
+					cmxd p= A[k+i], q= A[k+size/2+i]* R;
+					A[k+i]= p+q;	A[k+size/2+i]= p-q;
+				}
+			}
 		}
-		if(flag)    for(int i=0; i<L; i++)  A[i]/=2;
+		if(flag)    for(int i=0; i<L; i++)  A[i]/=L;
+		delete rev;
 		return A;
 	}
 	inline int s2i(const char *begin, const char *end) {//converse string to int
@@ -495,15 +519,15 @@ namespace tbb	{
 			int N=1<<(Log_2(A.d+B.d-1));
 			ans.d=N+2;	ans.num= new u32[ans.d]();
 			ans.sign=A.sign*B.sign;
-			vector< complex<double> > pA(N,0),pB(N,0),pC(N,0),aA(N,0),aB(N,0),aC(N,0);
-			for(x=0;x<A.d;x++)	pA[x]=A.num[x];
-			for(y=0;y<B.d;y++)	pB[y]=B.num[y];
-			aA=FFT(pA,false);	aB=FFT(pB,false);
-			for(int i=0; i<N; i++)	aC[i]= aA[i]* aB[i];
-			pC=FFT(aC,true);
+			vector< complex<double> > pA(N,0),aA(N,0);
+			for(x=0;x<A.d;x++)	pA[x].real(A.num[x]);
+			for(y=0;y<B.d;y++)	pA[y].imag(B.num[y]);
+			aA=FFT(pA,false);
+			for(int i=0; i<N; i++)	aA[i]= aA[i]* aA[i];
+			pA=FFT(aA,true);
 			double carry=0.0;
 			for(int i=0; i<N; i++)	{
-				double temp=round(real(pC[i])+carry);
+				double temp=round(pA[i].imag()/2+carry);
 				carry=round(temp/10000);
 				int base=(int)round(temp-carry*10000);
 				if(base<0)	base+=10000,carry-=1.0;
