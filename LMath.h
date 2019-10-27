@@ -3,7 +3,7 @@
 #include "LFloat.h"
 #endif
 
-#ifndef TBBLMAT_H //LMath.h ver:3.1.1
+#ifndef TBBLMAT_H //LMath.h ver:3.1.3
 #define TBBLMAT_H
 
 #include "LInt.h"
@@ -165,6 +165,13 @@ namespace tbb {
     const LInt lcd(const LInt &a, const LInt &b)  {
         return (a*b)/gcd(a,b);
     }
+    const LInt permutation(int n, int m)    {
+        if(m<0) return false;
+        if(m>n||m<=0)   return 0;
+        if(m==1)    return n;
+        return permutation(n, m/2)* permutation(n-m/2, m-m/2);
+    }
+    inline const LInt factorial(int n) {return permutation(n, n);}
     #ifdef TBBLFLT_H
         const LFloat sqrt(const LFloat& A) {
             if(A.negative()) return LFloat(LInt(false), 0);
