@@ -1,7 +1,8 @@
-#ifndef TBBLFLT_H // LFloat.h ver 3.0
+#ifndef TBBLFLT_H // LFloat.h ver 3.1.2
 #define TBBLFLT_H
 
 #include <climits>
+#include <sstream>
 #include "LInt.h"
 namespace tbb   {
     int _LFloat_prec= 100;
@@ -17,7 +18,7 @@ namespace tbb   {
         LFloat (u64);
         LFloat (double);
         LFloat (const char *);
-    private:
+        LFloat (const string& S)    {*this= S.c_str();}
         LFloat (const LInt& _b, int _p= 0):base(_b), pow(_p){sho();}
     public:
     //adjust LFloat.base to precision
@@ -30,6 +31,7 @@ namespace tbb   {
         inline bool abnormal(void) const    {return base.abnormal();}
         void sho(void);
         void print(void) const;
+        const string print_str(void)  const;
     //overload operator to calc
         const LFloat operator-(void)  const;
         const LFloat operator+(const LFloat &)  const;
@@ -40,6 +42,7 @@ namespace tbb   {
         int precision();
         int precision(int);
     };
+    const LFloat sqrt(const LFloat &);
 }
 tbb::LFloat::LFloat(int i):base(i),pow(0){
     int zero= 0;
@@ -56,6 +59,15 @@ tbb::LFloat::LFloat(u64 u):base(u),pow(0){
     for(zero= 0; zero< base.d&& base.num[zero]==0; zero++);
     base>>= zero;    pow+=zero;
 }
+tbb::LFloat::LFloat(double d):pow(0){
+    static std::stringstream sio;
+    while(sio.peek()!=-1)   sio.get();
+    sio.clear();
+    sio.precision(308);
+    sio<<d;
+    string s;   sio>>s;
+    *this= s;
+}
 tbb::LFloat::LFloat(const char *inString):base(false),pow(0)    {
     using std::isdigit;
     const char* &inS= inString;
@@ -71,19 +83,19 @@ tbb::LFloat::LFloat(const char *inString):base(false),pow(0)    {
             }   else
             if(*t=='E'||*t=='e')    {
                 if(scientific)  fail= true;
-                if(!scientific) scientific= true, sci_pt= t- inString;
+                if(!scientific) scientific= true, sci_pt= t- inS;
                 if(sci_pt==0)   fail= true;
             }   else
             if(*t=='.') {
                 if(dot||scientific) fail= true;
-                else    dot= true, dot_pt= t- inString;
+                else    dot= true, dot_pt= t- inS;
             }
         }
     }
     if(fail)    return ;
     len= strlen(inString);
     if(!scientific) sci_pt= len;
-    if(!dot)    dot_pt= len;
+    if(!dot)    dot_pt= sci_pt;
     if(scientific)  exp= s2i(inS+ sci_pt+ 1, inS+ len);
     if(sign==0) sign= '+';
     string s0(1, sign), s1(inS, dot_pt);
@@ -132,6 +144,7 @@ void tbb::LFloat::print(void) const {
         else    if(base[0]%10==0)   Fast_0_out(base[0]/10, 3);
         else    Fast_0_out(base[0]);
     }   else    {
+        putchar('0');
         putchar('.');
         for(int i=0; i<-pow-dgt; i++)    printf("0000");
         for(int i=dgt-1; i>0; i--) Fast_0_out(base[i]);
@@ -140,6 +153,36 @@ void tbb::LFloat::print(void) const {
         else    if(base[0]%10==0)   Fast_0_out(base[0]/10, 3);
         else    Fast_0_out(base[0]);
     }
+}
+const std::string tbb::LFloat::print_str(void) const    {
+    int dgt= base.d;
+    if(base.abnormal()) {return base.print_str();}
+    string ans;
+    if(base.negative()) ans+='-';
+    if(pow>=0)  {
+        ans+= i2s(base[dgt-1]);
+        for(int i=dgt-2; i>=0; i--) ans+= Fast_0_out_str(base[i]);
+        for(int i=0; i<pow; i++)    ans+= "0000";
+    }   else
+    if(-pow<dgt)   {//2563 1740 p-1= 2563.174
+        ans+= i2s(base[dgt-1]);
+        for(int i=dgt-2; i>=-pow; i--)   ans+= Fast_0_out_str(base[i]);
+        ans+= '.';
+        for(int i=-pow-1; i>0; i--) ans+= Fast_0_out_str(base[i]);
+        if(base[0]%1000==0) ans+= Fast_0_out_str(base[0]/1000, 1);
+        else    if(base[0]%100==0)  ans+= Fast_0_out_str(base[0]/100, 2);
+        else    if(base[0]%10==0)   ans+= Fast_0_out_str(base[0]/10, 3);
+        else    ans+= Fast_0_out_str(base[0]);
+    }   else    {
+        ans+= "0.";
+        for(int i=0; i<-pow-dgt; i++)    ans+= "0000";
+        for(int i=dgt-1; i>0; i--) ans+= Fast_0_out_str(base[i]);
+        if(base[0]%1000==0) ans+= Fast_0_out_str(base[0]/1000, 1);
+        else    if(base[0]%100==0)  ans+= Fast_0_out_str(base[0]/100, 2);
+        else    if(base[0]%10==0)   ans+= Fast_0_out_str(base[0]/10, 3);
+        else    ans+= Fast_0_out_str(base[0]);
+    }
+    return ans;
 }
 const tbb::LFloat tbb::LFloat::operator-(void) const   {
     LFloat ans(*this);
@@ -194,5 +237,4 @@ int tbb::LFloat::precision(int i){
     tbb::_LFloat_prec= i;
     return i;
 }
-
 #endif
