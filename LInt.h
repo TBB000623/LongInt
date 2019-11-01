@@ -27,6 +27,27 @@ namespace tbb	{
 	using std::sqrt;
 	using std::pow;
 
+	inline int s2i(const char *begin, const char *end) {//converse string to int
+		int tmp= 0, sig= 1;
+		if(*begin=='+'||*begin=='-')	sig= (*(begin++)=='+')?1:-1;
+		for(const char *t= end-1; t>= begin; t--)	tmp= tmp*10+ (*t-'0');
+		return tmp*sig;
+	}
+	inline const char* i2s(int L, char* dest= 0)	{//converse int to classical C-style string and return it
+		static char temp[16];
+		if(dest==0)	dest= temp;
+		if(L==0)	{
+			dest[0]= '0', dest[1]= '\0';
+			return dest;
+		}
+		char* org= dest;
+		if(L<0)	dest[0]= '-', dest++, L= -L;
+		u32 t= 1;
+		while(t<=unsigned(L))	t*=10;
+		while(t!=1)	t/=10, *(dest++)= '0'+(L/t), L%=t;
+		*dest= '\0';
+		return org;
+	}
 	void Fast_out(u32 a)	{
 		if(a==0) {
 			putchar('0');
@@ -48,7 +69,7 @@ namespace tbb	{
 		if(len>=2)	if(a<10)	ans+='0';
 		if(len>=3)	if(a<100)	ans+='0';
 		if(len>=4)	if(a<1000)	ans+='0';
-		ans+= a;
+		ans+= (a+'0');
 		return ans;
 	}
 	int Log_2(int base) {
@@ -93,12 +114,6 @@ namespace tbb	{
 		delete rev;
 		return A;
 	}
-	inline int s2i(const char *begin, const char *end) {//converse string to int
-		int tmp= 0, sig= 1;
-		if(*begin=='+'||*begin=='-')	sig= (*(begin++)=='+')?1:-1;
-		for(const char *t= end-1; t>= begin; t--)	tmp= tmp*10+ (*t-'0');
-		return tmp*sig;
-    }
 	struct LInt	{
 	//elements
 		short sign;
@@ -309,14 +324,14 @@ namespace tbb	{
 		string print_str()	const	{
 			if(sign==0)	return num==0?string("NaN"):string("0");
 			if(sign==2||sign==-2)	return sign==-2?string("-inf"):string("inf");
-			string ans(0);
+			string ans;
 			if(sign==-1)	ans+='-';
-			ans+=num[d-1];
+			ans+=i2s(num[d-1]);
 			for(int i=d-2; i>=0; i--)	{
 				if(num[i]<10)	ans+='0';
 				if(num[i]<100)	ans+='0';
 				if(num[i]<1000)	ans+='0';
-				ans+=num[i];
+				ans+=i2s(num[i]);
 			}
 			return ans;
 		}
