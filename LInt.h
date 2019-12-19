@@ -1,13 +1,10 @@
 #ifndef TBBLINT_H
 #define TBBLINT_H
 
-#include <iostream>	//version:3.1.2
+#include <iostream>	//version:3.2
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
-#include <algorithm>
-#include <complex>
-#include <vector>
 #include <cctype>
 #include <cstring>
 #include <string>
@@ -16,6 +13,7 @@ typedef unsigned long long u64;
 typedef long long i64;
 typedef unsigned u32;
 namespace tbb	{
+	const int vol= 131072;
 	const double Pi= 3.14159265358979323846;
 	using std::cin;
 	using std::cout;
@@ -30,7 +28,7 @@ namespace tbb	{
 	inline int s2i(const char *begin, const char *end) {//converse string to int
 		int tmp= 0, sig= 1;
 		if(*begin=='+'||*begin=='-')	sig= (*(begin++)=='+')?1:-1;
-		for(const char *t= end-1; t>= begin; t--)	tmp= tmp*10+ (*t-'0');
+		for(const char *t= begin; t<end; t++)	tmp= tmp*10+ (*t-'0');
 		return tmp*sig;
 	}
 	inline const char* i2s(int L, char* dest= 0)	{//converse int to classical C-style string and return it
@@ -65,12 +63,10 @@ namespace tbb	{
 		Fast_out(a);
 	}
 	inline std::string Fast_0_out_str(u32 a, int len= 4)	{
-		string ans;
-		if(len>=2)	if(a<10)	ans+='0';
-		if(len>=3)	if(a<100)	ans+='0';
-		if(len>=4)	if(a<1000)	ans+='0';
-		ans+= (a+'0');
-		return ans;
+		const char* a_str= i2s(a);
+		int left_0= len- strlen(a_str);	if(left_0<0)	left_0= 0;
+		string ans(left_0, '0');
+		return ans+ a_str;
 	}
 	int Log_2(int base) {
 		int i;
@@ -82,37 +78,104 @@ namespace tbb	{
 		while(A/10!=0)	A/=10;
 		return A;
 	}
-	// template<typename T, size_T> FFT(const std::array<T, N> &X, bool flag) {
-	std::vector<std::complex<double> > FFT(const std::vector<std::complex<double> > &X, bool flag) {
-		//flag -> inverse flag
-		using std::complex;
-		using std::vector;
-		typedef complex<double> cmxd;
-		int L=X.size();
-		if(L==1)	return X;
-		static const int vol= 262144;
-    	static bool pre_init= true;
-    	static cmxd root[vol+1];
-		if(pre_init)    {
-        	for(int i=0; i<=vol; i++) root[i]= exp(cmxd(0, 2*Pi/vol*i));
-        	pre_init= false;
-    	}
-		int* rev;   rev= new int [L];	rev[0]= 0, rev[1]= L/2;
-    	{for(int i=2; i<L; i++)  rev[i]=(rev[i&1])|(rev[i>>1]>>1);}
-		vector< complex<double> > A(L);
-		for(int i=0; i<L; i++)	A[i]= X[rev[i]];
-		for(int size=2; size<=L; size<<=1)	{
-			for(int k=0; k<L; k+=size)	{
-				for(int i=0; i<size/2; i++)	{
-					cmxd R= (!flag)? root[vol/size*i]: root[vol- vol/size*i];
-					cmxd p= A[k+i], q= A[k+size/2+i]* R;
-					A[k+i]= p+q;	A[k+size/2+i]= p-q;
-				}
-			}
-		}
-		if(flag)    for(int i=0; i<L; i++)  A[i]/=L;
-		delete rev;
-		return A;
+	struct complex {
+	    double x,y;
+	    complex(const complex &A):x(A.x), y(A.y){}
+	    complex(double _x= 0, double _y= 0):x(_x), y(_y){}
+	    complex& operator = (const double &B)    {
+	        x=B;    y=0.0;
+	        return *this;
+	    }
+	    complex& operator = (const complex &B)   {
+	        x=B.x;  y=B.y;
+	        return *this;
+	    }
+	    inline double abs() const  {return std::sqrt(((*this)*conj()).x);}
+	    inline complex conj () const {return complex(x,-y);}
+	    inline complex left () const {return complex(-y,x);}
+	    inline complex right() const {return complex(y,-x);}
+	    inline complex operator - (void) const {return complex(-x, -y);}
+	    inline complex operator + (const double &B) const {return complex(x+B, y);}
+	    inline complex operator - (const double &B) const {return complex(x-B, y);}
+	    inline complex operator * (const double &B) const {return complex(x*B, y*B);}
+	    inline complex operator / (const double &B) const {return complex(x/B, y/B);}
+	    inline complex operator + (const complex &B) const {return complex(x+B.x, y+B.y);}
+	    inline complex operator - (const complex &B) const {return complex(x-B.x, y-B.y);}
+	    inline complex operator * (const complex &B) const {return complex( (x*B.x-y*B.y) , (x*B.y+y*B.x) );}
+	    inline complex operator / (const complex &B) const {return (*this)*B.conj()/(B*B.conj()).x;}
+	    inline complex & operator += (const complex &B) {return *this= *this+ B;}
+	};
+	complex root_cplx[vol];
+	bool pre_init= false;
+	void init_root()  {
+	    if(pre_init)   return ;
+	    pre_init= true;
+	    int i;  complex *a, *b, *c, *d;
+	    double x, y;
+	    complex* root= root_cplx;
+	    for(i=0, a=root, b= c= root+vol/2, d= root+vol; i<=vol/4; i++, a++, b--, c++, d--)  {
+	        x= std::cos(2*i*Pi/vol), y= std::sin(2*i*Pi/vol);
+	        *a= complex(x, y);  *b= complex(-x, y);
+	        *c= complex(-x, -y);*d= complex(x, -y);
+	    }
+	}
+	void DFT(const complex* A, complex* a, int n, bool inv= false)  {
+	    if(n==0)    {a[0]= A[0]; return ;}
+	    int log= 0;
+	    {int ans;   for(ans= 1; ans<n; log++, ans<<=1)  if(ans>n)   return ;}
+	    if(!pre_init)   init_root();
+	    static int rev[vol], last_n= 0;
+	    static complex rt[vol/2+1];
+	    static complex temp[vol];
+	    if(last_n!=n)   {
+	        rev[0]=0, rev[1]= n/2;
+	        for(register int i=2; i<n; i++)  rev[i]=(rev[i&1])|(rev[i>>1]>>1);
+	        last_n= n;
+	    }
+	    for(register int i=0; i<n; i++)   temp[i]= A[rev[i]];
+	    for(register int size= 2; size<= n; size<<=1) {
+	        for(register int i=0; i<size/2; i++)  rt[i]= inv?root_cplx[vol- vol/size*i]:root_cplx[vol/size*i];
+	        for(int k=0; k<n; k+=size)  {
+	            for(int i=0; i<size/2; i++) {
+	                complex q= temp[k+size/2+i]*rt[i];
+	                temp[k+size/2+i]= temp[k+i]-q;
+	                temp[k+i]+=q;
+	            }
+	        }
+	    }
+	    if(inv) for(register int i=0; i<n; i++)   temp[i]= temp[i]/n;
+	    for(register int i=0; i<n; i++)   a[i]= temp[i];
+	}
+	void circ_conv(const double* A, const double* B, double* C, int n)   {
+	    if(n<=1024) {
+	        for(register int k=0; k<n; k++) C[k]= 0.0;
+	        for(register int i=0; i<n; i++) for(register int j=0; j<n; j++) C[(i+j)%n]+= A[i]* B[j];
+	        return ;
+	    }
+	    typedef complex cmxd;
+	    int log= 0;
+	    {int ans;   for(ans= 1; ans<n; log++, ans<<=1)  if(ans>n)   return ;}
+	    if(!pre_init)   init_root();
+	    static cmxd P[vol/2], Q[vol/2];
+	    static cmxd a_0[vol/2], a_1[vol/2], b_0[vol/2], b_1[vol/2];
+	    static cmxd c_0[vol/2], c_1[vol/2];
+	    for(register int i=0; i<n/2; i++)   P[i].x= A[i<<1], P[i].y= A[(i<<1)|1];
+	    DFT(P, P, n/2, false);
+	    Q[0]= P[0].conj();  for(register int i=1; i<n/2; i++)   Q[i]= P[n/2- i].conj();
+	    for(register int i=0; i<n/2; i++)   a_0[i]= (P[i]+Q[i])/2, a_1[i]= ((P[i]-Q[i])/2).left();
+
+	    for(register int i=0; i<n/2; i++)   P[i].x= B[i<<1], P[i].y= B[(i<<1)+1];
+	    DFT(P, P, n/2, false);
+	    Q[0]= P[0].conj();  for(register int i=1; i<n/2; i++)   Q[i]= P[n/2- i].conj();
+	    for(register int i=0; i<n/2; i++)   b_0[i]= (P[i]+Q[i])/2, b_1[i]= ((P[i]-Q[i])/2).left();
+
+	    for(register int i=0; i<n/2; i++)   {
+	        c_0[i]= a_0[i]* b_0[i]+ a_1[i]* b_1[i]* root_cplx[2*vol/n*i];
+	        c_1[i]= a_0[i]* b_1[i]+ a_1[i]* b_0[i];
+	    }
+	    for(register int i=0; i<n/2; i++)   P[i]= c_0[i]+ c_1[i].right();
+	    DFT(P, P, n/2, true);
+	    for(register int i=0; i<n/2; i++)   C[i<<1]= P[i].x, C[(i<<1)|1]= P[i].y;
 	}
 	struct LInt	{
 	//elements
@@ -527,22 +590,21 @@ namespace tbb	{
 			if(A.isinf())	return (B.sign>0)?A:-A;
 			if(B.isinf())	return (A.sign>0)?B:-B;
 			if(A.zero()||B.zero())	return 0;
-			using std::complex;
-			using std::vector;
 			LInt ans;
-			int x,y;
+			register int x,y;
 			int N=1<<(Log_2(A.d+B.d-1));
 			ans.d=N+2;	ans.num= new u32[ans.d]();
 			ans.sign=A.sign*B.sign;
-			vector< complex<double> > pA(N,0),aA(N,0);
-			for(x=0;x<A.d;x++)	pA[x].real(A.num[x]);
-			for(y=0;y<B.d;y++)	pA[y].imag(B.num[y]);
-			aA=FFT(pA,false);
-			for(int i=0; i<N; i++)	aA[i]= aA[i]* aA[i];
-			pA=FFT(aA,true);
+			static double a[vol], b[vol], c[vol];
+			for(x=0; x<A.d; x++)	a[x]= A.num[x];
+			for(y=0; y<B.d; y++)	b[y]= B.num[y];
+			for(x=A.d; x<N; x++)	a[x]= 0;
+			for(y=B.d; y<N; y++)	b[y]= 0;
+			for(x=0; x<N; x++)		c[x]= 0;
+			circ_conv(a, b, c, N);
 			double carry=0.0;
 			for(int i=0; i<N; i++)	{
-				double temp=round(pA[i].imag()/2+carry);
+				double temp=round(c[i])+carry;
 				carry=round(temp/10000);
 				int base=(int)round(temp-carry*10000);
 				if(base<0)	base+=10000,carry-=1.0;
