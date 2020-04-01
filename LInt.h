@@ -32,7 +32,7 @@ namespace tbb	{
 		return tmp*sig;
 	}
 	inline const char* i2s(int L, char* dest= 0)	{//converse int to classical C-style string and return it
-		static char temp[16];
+		static char temp[20];
 		if(dest==0)	dest= temp;
 		if(L==0)	{
 			dest[0]= '0', dest[1]= '\0';
@@ -62,6 +62,16 @@ namespace tbb	{
 		if(len>=4)	if(a<1000)	putchar('0');
 		Fast_out(a);
 	}
+	inline const char* Fast_0_out_char(u32 a, char* dest= 0, int len= 4)	{
+		static char temp[256];	if(dest==0)	dest= temp;
+		if(len>256)	len= 255;
+		const char* a_str= i2s(a);
+		int left_0= len- strlen(a_str);	if(left_0<0)	left_0= 0;
+		for(int i=0; i<left_0; i++)	dest[i]= '0';
+		for(int j=0; a_str[j]!=0; j++)	dest[left_0+j]= a_str[j];
+		dest[std::max(len, int(strlen(a_str)))]= '\0';
+		return dest;
+	}
 	inline std::string Fast_0_out_str(u32 a, int len= 4)	{
 		const char* a_str= i2s(a);
 		int left_0= len- strlen(a_str);	if(left_0<0)	left_0= 0;
@@ -70,7 +80,7 @@ namespace tbb	{
 	}
 	int Log_2(int base) {
 		int i;
-		for(i=0; ((1<<i)<base) & (i<32) ;i++);
+		for(i=0; ((1<<i)<base) && (i<32) ;i++);
 		return i;
 	}
 	inline int higdgst(int A)	{
@@ -78,18 +88,13 @@ namespace tbb	{
 		while(A/10!=0)	A/=10;
 		return A;
 	}
+	//structure complex, DFT, FFT & circulate conversion
 	struct complex {
-	    double x,y;
-	    complex(const complex &A):x(A.x), y(A.y){}
-	    complex(double _x= 0, double _y= 0):x(_x), y(_y){}
-	    complex& operator = (const double &B)    {
-	        x=B;    y=0.0;
-	        return *this;
-	    }
-	    complex& operator = (const complex &B)   {
-	        x=B.x;  y=B.y;
-	        return *this;
-	    }
+		double x,y;
+		complex(const complex &A):x(A.x), y(A.y){}
+		complex(double _x= 0, double _y= 0):x(_x), y(_y){}
+		complex& operator= (const double &B)	{x=B, y=0; return *this;}
+		complex& operator= (const complex &B)	{x=B.x, y=B.y; return *this;}
 	    inline double abs() const  {return std::sqrt(((*this)*conj()).x);}
 	    inline complex conj () const {return complex(x,-y);}
 	    inline complex left () const {return complex(-y,x);}
@@ -299,7 +304,6 @@ namespace tbb	{
 		inline LInt & operator=(u64 u)	{return *this= LInt(u);}
 	//compare operator
 		bool operator<(const LInt &B) const	{
-
 			const LInt &A= *this;
 			if(A.isNaN()||B.isNaN())	return false;
 			if(A.sign<B.sign)	return true;
@@ -857,6 +861,7 @@ namespace tbb	{
 	#endif
 	};
 	LInt mul_pow10(const LInt &A, int k)    {
+		//return A*10^k
         if(A.isNaN()||A.zero()||A.isinf())  return A;
         int t1;
         switch(k%4) {

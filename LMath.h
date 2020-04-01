@@ -1,4 +1,4 @@
-#define debug
+// #define debug
 #ifdef debug
 #include "LFloat.h"
 #endif
