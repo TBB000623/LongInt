@@ -412,40 +412,6 @@ ptLInt intPow(ptLInt base,ptLInt pow)	{
 	intFree(max);
 	return ans;
 }
-#ifdef NewVersion
-class LInt	{
-	private:
-		int n;
-		int sign;
-		int * num;
-	public:
-		LInt();
-		LInt(int i32);
-		LInt(long long int i64);
-		LInt(unsigned long long u64);
-		LInt(char str*);
-		~LInt();
-};
-LInt::LInt()	{
-	n=0;
-	sign=0;
-	num=new int [1];
-	num[0]=0;
-}
-LInt::LInt(int i32)	{
-	if(i32==0)	{
-		n=0;
-		sign=0;
-		num=new int [1];
-		num[0]=0;
-	}
-	else	if(i32>0)	{
-		sign=1;
-		if(i32<10)	n=1;
-		else	if(i32)
-	}
-}
-#endif
 int main()	{
 	ptLInt a=intInput(),b=intInput(),c;
 	c=intAdd(a,b);
