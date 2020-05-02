@@ -1,7 +1,7 @@
 #ifndef TBBLINT_H
 #define TBBLINT_H
 
-#include <iostream>	//version:3.2
+#include <iostream>	//version:3.2.1
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
@@ -423,6 +423,11 @@ namespace tbb	{
 			else	cout<<"LInt = NaN\n";
 			cout<< "show LInt end.\n";
 		}
+		int	digit()	const	{
+			if(isinf())	return -1;
+			if(zero())	return 0;
+			return strlen(i2s(num[d-1]))+ 4*(d-1);
+		}
 		inline bool isNaN()	const	{return (num==0)&&(d==0)&&(sign==0);}
 		inline bool positive()	const	{return sign>0;}
 		inline bool negative()	const	{return sign<0;}
@@ -789,6 +794,8 @@ namespace tbb	{
 			return b;
 		}
 		inline u32 & operator[](int k) const	{
+			static u32 wrong= 0;
+			if(zero())	return wrong=0;
 			return num[k];
 		}
 	//Friend Function for Other Classical Class
@@ -863,14 +870,15 @@ namespace tbb	{
 	LInt mul_pow10(const LInt &A, int k)    {
 		//return A*10^k
         if(A.isNaN()||A.zero()||A.isinf())  return A;
-        int t1;
-        switch(k%4) {
+        int t1, divi, res;
+		res= (k%4 + 4)%4;	divi= (k-res)/4;
+        switch(res) {
             case(0):    t1= 1;  break;
             case(1):    t1= 10; break;
             case(2):    t1= 100;break;
             default:    t1=1000;break;
         }
-        return (A* t1)<<(k/4);
+        return (divi>=0)?((A*t1)<<divi):((A*t1)>>-divi);
     }
 	LInt pow10(int k)   {return mul_pow10(1,k);}
 }
