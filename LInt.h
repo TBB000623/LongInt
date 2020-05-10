@@ -1,7 +1,7 @@
 #ifndef TBBLINT_H
 #define TBBLINT_H
 
-#include <iostream>	//version:3.2.1
+#include <iostream>	//version:3.2.2
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
@@ -11,6 +11,7 @@
 
 typedef unsigned long long u64;
 typedef long long i64;
+typedef int i32;
 typedef unsigned u32;
 namespace tbb	{
 	const int vol= 131072;
@@ -330,16 +331,21 @@ namespace tbb	{
 			return true;
 		}
 		inline bool operator>(const LInt &B) const	{
-			return B<(const LInt &)*this;
+			const LInt & A= *this;
+			return (A.isNaN()||B.isNaN()) ? false : B<A;
 		}
 		inline bool operator!=(const LInt &B) const	{
-			return !(*this==B);
+			const LInt & A= *this;
+			return (A.isNaN()||B.isNaN()) ? false : !(A==B);
+
 		}
 		inline bool operator>=(const LInt &B) const	{
-			return !(*this<B);
+			const LInt & A= *this;
+			return (A.isNaN()||B.isNaN()) ? false : !(A<B);
 		}
 		inline bool operator<=(const LInt &B) const	{
-			return !(*this>B);
+			const LInt & A= *this;
+			return (A.isNaN()||B.isNaN()) ? false : !(A>B);
 		}
 	//functions
 		LInt abs()	const {
@@ -797,6 +803,10 @@ namespace tbb	{
 			static u32 wrong= 0;
 			if(zero())	return wrong=0;
 			return num[k];
+			/* When *this=0 here should throw an exception, because there
+			 * isn't any list to return. But for a better experience, I just
+			 * return a static variable.
+			 */
 		}
 	//Friend Function for Other Classical Class
 		friend LInt operator+(int A, const LInt &B)	{
@@ -882,5 +892,5 @@ namespace tbb	{
     }
 	LInt pow10(int k)   {return mul_pow10(1,k);}
 }
-
+const tbb::LInt inf("+inf"), zero(0);
 #endif
