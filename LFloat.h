@@ -1,4 +1,4 @@
-#ifndef TBBLFLT_H // LFloat.h ver 3.2
+#ifndef TBBLFLT_H // LFloat.h ver 3.2.1
 #define TBBLFLT_H
 
 #include <climits>
@@ -32,11 +32,16 @@ namespace tbb   {
 		void print(void) const;
 		const string print_str(void)  const;
 	//overload operator to calc
-		const LFloat operator-(void)  const;
-		const LFloat operator+(const LFloat &)  const;
-		const LFloat operator-(const LFloat &)  const;
-		const LFloat operator*(const LFloat &)  const;
-		const LFloat operator/(const LFloat &)  const;
+		LFloat operator+(void)	const;
+		LFloat operator-(void)	const;
+		LFloat operator+(const LFloat &)	const;
+		LFloat operator-(const LFloat &)	const;
+		LFloat operator*(const LFloat &)	const;
+		LFloat operator/(const LFloat &)	const;
+		LFloat & operator+=(const LFloat &);
+		LFloat & operator-=(const LFloat &);
+		LFloat & operator*=(const LFloat &);
+		LFloat & operator/=(const LFloat &);
 	//compare operator
 		inline bool operator==(const LFloat &)	const;
 		inline bool operator!=(const LFloat &)	const;
@@ -48,7 +53,7 @@ namespace tbb   {
 		int precision();
 		int precision(int);
 	};
-	const LFloat sqrt(const LFloat &);
+
 }
 
 tbb::LFloat::LFloat(int i):base(i),pow(0){
@@ -191,12 +196,13 @@ const std::string tbb::LFloat::print_str(void) const    {
 	return ans;
 }
 
-const tbb::LFloat tbb::LFloat::operator-(void) const   {
+tbb::LFloat tbb::LFloat::operator+(void) const	{return *this;}
+tbb::LFloat tbb::LFloat::operator-(void) const	{
 	LFloat ans(*this);
 	ans.base.sign= -ans.base.sign;
 	return ans;
 }
-const tbb::LFloat tbb::LFloat::operator+(const LFloat &B) const  {
+tbb::LFloat tbb::LFloat::operator+(const LFloat &B) const	{
 	const LFloat &A= *this;
 	if(A.isNaN()||B.isNaN())    return false;
 	if(A.zero()||B.zero())  return A.zero()? B: A;
@@ -209,10 +215,10 @@ const tbb::LFloat tbb::LFloat::operator+(const LFloat &B) const  {
 	ans.sho();
 	return ans;
 }
-const tbb::LFloat tbb::LFloat::operator-(const LFloat &B) const {
+tbb::LFloat tbb::LFloat::operator-(const LFloat &B) const	{
 	return (*this)+ (-B);
 }
-const tbb::LFloat tbb::LFloat::operator*(const LFloat &B) const {
+tbb::LFloat tbb::LFloat::operator*(const LFloat &B) const	{
 	const LFloat &A= *this;
 	if(A.abnormal()||B.abnormal())  return LFloat(A.base*B.base, 0);
 	LInt ans_base= A.base* B.base;  i64 ans_pow= i64(A.pow)+ i64(B.pow);
@@ -223,7 +229,7 @@ const tbb::LFloat tbb::LFloat::operator*(const LFloat &B) const {
 	}
 	return LFloat(ans_base, ans_pow);
 }
-const tbb::LFloat tbb::LFloat::operator/(const LFloat &B) const {
+tbb::LFloat tbb::LFloat::operator/(const LFloat &B) const	{
 	const LFloat &A= *this; int n= _LFloat_prec;
 	if(A.abnormal()||B.abnormal())  return LFloat(A.base/B.base, 0);
 	LInt a= A.base, b= B.base;  i64 p= A.pow, q= B.pow;
@@ -237,6 +243,10 @@ const tbb::LFloat tbb::LFloat::operator/(const LFloat &B) const {
 	}
 	return LFloat(c, r);
 }
+tbb::LFloat & tbb::LFloat::operator+=(const LFloat &B)	{return *this= *this+B;}
+tbb::LFloat & tbb::LFloat::operator-=(const LFloat &B)	{return *this= *this-B;}
+tbb::LFloat & tbb::LFloat::operator*=(const LFloat &B)	{return *this= *this*B;}
+tbb::LFloat & tbb::LFloat::operator/=(const LFloat &B)	{return *this= *this/B;}
 
 inline bool tbb::LFloat::operator==(const LFloat &B) const	{
 	const LFloat & A= *this;
