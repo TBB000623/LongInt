@@ -1,9 +1,9 @@
-// #define debug
+#define debug
 #ifdef debug
 #include "LFloat.h"
 #endif
 
-#ifndef TBBLMAT_H //LMath.h ver:3.1.3
+#ifndef TBBLMAT_H //LMath.h ver:3.2.2
 #define TBBLMAT_H
 
 #include "LInt.h"
@@ -173,7 +173,12 @@ namespace tbb {
     }
     inline const LInt factorial(int n) {return permutation(n, n);}
     #ifdef TBBLFLT_H
-        const LFloat sqrt(const LFloat& A) {
+        LFloat abs(const LFloat & A)    {
+            LFloat B= A;
+            B.base.sign= -B.base.sign;
+            return B;
+        }
+        LFloat sqrt(const LFloat & A) {
             if(A.negative()) return LFloat(LInt(false), 0);
             if(A.abnormal()) return A;
             const int n= tbb::_LFloat_prec;
@@ -182,7 +187,7 @@ namespace tbb {
             if(t%2!=0)  t++, u>>=1;
             return LFloat(sqrt(u), t/2);
         }
-        const LFloat pow(const LFloat& A, int n) {
+        LFloat pow(const LFloat& A, int n) {
             if(n<0) return LFloat(1.0)/pow(A, -n);
             if(A.isNaN()||(A.meanless()&&n==0))   return false;
             if(A.isinf())    {return (A.negative()&&n%2==0)? -A: A;}
