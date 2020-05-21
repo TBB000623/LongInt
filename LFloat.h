@@ -1,4 +1,4 @@
-#ifndef TBBLFLT_H // LFloat.h ver 3.2.2
+#ifndef TBBLFLT_H // LFloat.h ver 3.2.2.1
 #define TBBLFLT_H
 
 #include <climits>
@@ -50,8 +50,8 @@ namespace tbb   {
 		inline bool operator<=(const LFloat &)	const;
 		inline bool operator>=(const LFloat &)	const;
 	//precision for LFloat
-		int precision();
-		int precision(int);
+		static int precision();
+		static int precision(int);
 	};
 
 }
@@ -300,7 +300,7 @@ std::ostream & operator<<(std::ostream & os, const tbb::LFloat & A) {
 		return os;
 	}
 	//get format flags
-	int p= std::max(os.precision(), 0);
+	int p= std::max(int(os.precision()), 0);
 	std::ios_base::fmtflags flag= os.flags() & std::ios_base::floatfield;
 	if(flag == std::ios_base::fixed)	{//fixed mode
 		tbb::LInt B_normal= tbb::mul_pow10(A.base, 4*A.pow+p+1); //A= B*10^-p; B has a digit after point

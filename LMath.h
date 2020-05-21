@@ -1,12 +1,12 @@
 #define debug
-#ifdef debug
-#include "LFloat.h"
-#endif
 
-#ifndef TBBLMAT_H //LMath.h ver:3.2.2
+#ifndef TBBLMAT_H //LMath.h ver:3.2.2.1
 #define TBBLMAT_H
 
 #include "LInt.h"
+#ifdef debug
+#include "LFloat.h"
+#endif
 namespace tbb {
     const LInt powrt(const LInt&, int);
     LInt abs(const LInt &B)	{
@@ -199,7 +199,16 @@ namespace tbb {
             }
             return ans;
         }
-        const LFloat exp(const LFloat& A)   {
+        LFloat mul_pow10(LFloat x, int m)   {
+            if(x.abnormal())    return x;
+            int flr4, mod4;
+            mod4= (m%4+4)%4;    flr4= (m-mod4)/4;
+            LFloat ans= x* pow10(mod4);
+            ans.pow+= flr4;
+            return ans;
+        }
+        // LFloat pow10(int m)  {return mul_pow10(LFloat(1), m);}
+        LFloat exp(const LFloat& A)   {
             return false;
         }
     #endif
