@@ -1,7 +1,7 @@
 #ifndef TBBLINT_H
 #define TBBLINT_H
 
-#include <iostream>	//version:3.2.2
+#include <iostream>	//version:3.2.2.1
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
@@ -877,6 +877,14 @@ namespace tbb	{
 		}
 	#endif
 	};
+
+	template <typename T= LInt>
+	T mul_pow10(const T &, int);
+
+	template <typename T= LInt>
+	T pow10(int);
+
+	template <>
 	LInt mul_pow10(const LInt &A, int k)    {
 		//return A*10^k
         if(A.isNaN()||A.zero()||A.isinf())  return A;
@@ -890,6 +898,8 @@ namespace tbb	{
         }
         return (divi>=0)?((A*t1)<<divi):((A*t1)>>-divi);
     }
+
+	template <>
 	LInt pow10(int k)   {return mul_pow10(1,k);}
 }
 const tbb::LInt inf("+inf"), zero(0);
