@@ -1,4 +1,4 @@
-#ifndef TBBLFLT_H // LFloat.h ver 3.2.2.1
+#ifndef TBBLFLT_H // LFloat.h ver 3.2.3
 #define TBBLFLT_H
 
 #include <climits>
@@ -42,6 +42,12 @@ namespace tbb   {
 		LFloat & operator-=(const LFloat &);
 		LFloat & operator*=(const LFloat &);
 		LFloat & operator/=(const LFloat &);
+
+		friend LFloat operator+(double, const LFloat &);
+		friend LFloat operator-(double, const LFloat &);
+		friend LFloat operator*(double, const LFloat &);
+		friend LFloat operator/(double, const LFloat &);
+
 	//compare operator
 		inline bool operator==(const LFloat &)	const;
 		inline bool operator!=(const LFloat &)	const;
@@ -50,10 +56,12 @@ namespace tbb   {
 		inline bool operator<=(const LFloat &)	const;
 		inline bool operator>=(const LFloat &)	const;
 	//precision for LFloat
-		static int precision();
-		static int precision(int);
+		int precision();
+		int precision(int);
+	//friend function for IO
+		friend std::istream & operator>>(std::istream &, tbb::LFloat &);
+		friend std::ostream & operator<<(std::ostream &, const tbb::LFloat &);
 	};
-
 }
 
 tbb::LFloat::LFloat(int i):base(i),pow(0){
@@ -247,6 +255,11 @@ tbb::LFloat & tbb::LFloat::operator+=(const LFloat &B)	{return *this= *this+B;}
 tbb::LFloat & tbb::LFloat::operator-=(const LFloat &B)	{return *this= *this-B;}
 tbb::LFloat & tbb::LFloat::operator*=(const LFloat &B)	{return *this= *this*B;}
 tbb::LFloat & tbb::LFloat::operator/=(const LFloat &B)	{return *this= *this/B;}
+
+tbb::LFloat operator+(double A, const tbb::LFloat & B)	{return tbb::LFloat(A)+B;}
+tbb::LFloat operator-(double A, const tbb::LFloat & B)	{return tbb::LFloat(A)-B;}
+tbb::LFloat operator*(double A, const tbb::LFloat & B)	{return tbb::LFloat(A)*B;}
+tbb::LFloat operator/(double A, const tbb::LFloat & B)	{return tbb::LFloat(A)/B;}
 
 inline bool tbb::LFloat::operator==(const LFloat &B) const	{
 	const LFloat & A= *this;
