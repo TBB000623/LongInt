@@ -1,6 +1,6 @@
 #define debug
 
-#ifndef TBBLMAT_H //LMath.h ver:3.2.2.1
+#ifndef TBBLMAT_H //LMath.h ver:3.3
 #define TBBLMAT_H
 
 #include "LInt.h"
@@ -8,7 +8,7 @@
 #include "LFloat.h"
 #endif
 namespace tbb {
-    const LInt powrt(const LInt&, int);
+    LInt powrt(const LInt&, int);
     LInt abs(const LInt &B)	{
 		LInt ans(B);
 		if (B.sign<0) ans.sign=-B.sign;
@@ -51,7 +51,7 @@ namespace tbb {
         }
         return _A;
     }
-    const LInt sqrt(const LInt &base) {
+    LInt sqrt(const LInt &base) {
 		if(base.isNaN()||base.sign<0)	return false;
         if(base.sign==2)    return base;
 		if(base.sign==0)	return 0;
@@ -70,7 +70,8 @@ namespace tbb {
 		}
 		return ans;
 	}
-    const LInt pow(const LInt &A, int k)  {
+
+    LInt pow(const LInt &A, int k)  {
         if((A==0&&k==0)||A.isNaN())  return false;
         if(A.isinf()&&k>=0)   {
             if(k==0)    return false;
@@ -91,7 +92,8 @@ namespace tbb {
         }
         return S;
     }
-    const LInt recip_m(const LInt &A, int m)    {
+
+    LInt recip_m(const LInt &A, int m)    {
         if(A.abnormal())    return A;
         if(A.d<=m)  return (powrt(A, m)<<m)/A;
         int n= (A.d+m-1)/m;
@@ -117,7 +119,7 @@ namespace tbb {
         } while(delta>0);
         return _A;
     }
-    const LInt powrt(const LInt &A, int m)  {
+    LInt powrt(const LInt &A, int m)  {
         if(A.isNaN()||m<=0)   return false;
         if(A.zero())    return 0;
         if(A.negative()&&m%2==0)  return false;
@@ -147,6 +149,7 @@ namespace tbb {
         }
         return ans;
     }
+
     const LInt gcd(LInt a, LInt b)  {
         if(a.isNaN()||b.isNaN())    return false;
         LInt pow= 1;
@@ -165,6 +168,7 @@ namespace tbb {
     const LInt lcd(const LInt &a, const LInt &b)  {
         return (a*b)/gcd(a,b);
     }
+
     const LInt permutation(int n, int m)    {
         if(m<0) return false;
         if(m>n||m<=0)   return 0;
@@ -188,7 +192,7 @@ namespace tbb {
             return LFloat(sqrt(u), t/2);
         }
         LFloat pow(const LFloat& A, int n) {
-            if(n<0) return LFloat(1.0)/pow(A, -n);
+            if(n<0) return 1.0/pow(A, -n);
             if(A.isNaN()||(A.meanless()&&n==0))   return false;
             if(A.isinf())    {return (A.negative()&&n%2==0)? -A: A;}
             if(A.zero())    return A;
@@ -199,7 +203,9 @@ namespace tbb {
             }
             return ans;
         }
-        LFloat mul_pow10(LFloat x, int m)   {
+
+        template<>
+        LFloat mul_pow10(const LFloat & x, int m)   {
             if(x.abnormal())    return x;
             int flr4, mod4;
             mod4= (m%4+4)%4;    flr4= (m-mod4)/4;
@@ -207,9 +213,41 @@ namespace tbb {
             ans.pow+= flr4;
             return ans;
         }
-        // LFloat pow10(int m)  {return mul_pow10(LFloat(1), m);}
-        LFloat exp(const LFloat& A)   {
-            return false;
+
+        template<>
+        LFloat pow10(int k) {return mul_pow10<LFloat>(1, k);}
+
+        LFloat pow_pow10(const LFloat & x, int m)   {
+            LFloat S= 1;
+            for(int i=0; i<m; ++i)  S*= x;
+            for(int i=0; i<m; ++i)  S= pow(x, 5);
+            return S;
+        }// return x^(10^m)
+        LFloat exp(const LFloat& x)   {
+            if(x.isNaN())   return x;
+            if(x.isinf() && x.positive())   return x;
+            if(x.isinf() && x.negative())   return 0;
+            if(x==0)    return 1;
+            if(x > (double(_LFloat_prec)+INT_MAX)*log(10000))   return LInt("inf");
+            if(x < (double(INT_MIN))*log(10000))    return 0;
+
+            if(x>1) return pow_pow10( exp(LFloat(x.base, -x.base.d)), 4 * (x.pow+x.base.d) );
+            int precision= _LFloat_prec * 4;
+            int bound= int(std::sqrt(precision));
+            LFloat B= pow10<LFloat>(-bound);
+            if(x>B) {
+                int delta_pow= 4*x.pow + x.base.digit() + bound;
+                LFloat x_= mul_pow10(x, -delta_pow);
+                return pow_pow10(exp(x_), delta_pow);
+            }
+
+            _LFloat_prec= (precision + Log_2(precision))/4 + 1;
+            int N= precision / bound +1;
+            LFloat S= 1;
+            for(int i=N; i>0; --i)  S= S* (x/i) + 1;
+            _LFloat_prec= precision/4;
+            S.sho();
+            return S;
         }
     #endif
 }
