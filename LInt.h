@@ -1,7 +1,7 @@
 #ifndef TBBLINT_H
 #define TBBLINT_H
 
-#include <iostream>	//version:3.4
+#include <iostream>	//version:3.4.1
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
@@ -104,6 +104,10 @@ namespace tbb	{
 	    inline complex operator / (const complex &B) const {return (*this)*B.conj()/(B*B.conj()).x;}
 	    inline complex & operator += (const complex &B) {return *this= *this+ B;}
 	};
+	complex complex_exp(int i, int s) {
+		const double Pi= 3.14159265358979323846;
+		return complex(std::cos(2*Pi*i/s), std::sin(2*Pi*i/s));
+	}
 	complex root_cplx[vol];
 	bool pre_init= false;
 	void init_root()  {
@@ -117,11 +121,23 @@ namespace tbb	{
 	        *c= complex(-x, -y);*d= complex(x, -y);
 	    }
 	}
-	void DFT(const complex* A, complex* a, int n, bool inv= false)  {
+	void DFT(const complex* A, complex* a, int n, bool inv= false)	{
 	    if(n==0)    {a[0]= A[0]; return ;}
 	    int log= 0;
 	    {int ans;   for(ans= 1; ans<n; log++, ans<<=1)  if(ans>n)   return ;}
 	    if(!tbb::pre_init)   init_root(), tbb::pre_init= true;
+		int factor_list[32], factor_length;
+		struct{
+			int operator()(int fnum, int* flist)	{
+				int n= 0;
+				for(int i=2; i*i<=fnum; ++i)	{
+					while(fnum%i==0)	flist[n++]= i, fnum/=i;
+				}
+				if(fnum!=1)	flist[n++]= fnum;
+				return n;
+			}
+		} Factor;
+		factor_length= Factor(n, factor_list);
 	    static int rev[vol], last_n= 0;
 	    static complex rt[vol/2+1];
 	    static complex temp[vol];
@@ -132,7 +148,7 @@ namespace tbb	{
 	    }
 	    for(register int i=0; i<n; i++)   temp[i]= A[rev[i]];
 	    for(register int size= 2; size<= n; size<<=1) {
-	        for(register int i=0; i<size/2; i++)  rt[i]= inv?root_cplx[vol- vol/size*i]:root_cplx[vol/size*i];
+	        for(register int i=0; i<size/2; i++)  rt[i]= inv?complex_exp(-i, size):complex_exp(i, size);
 	        for(int k=0; k<n; k+=size)  {
 	            for(int i=0; i<size/2; i++) {
 	                complex q= temp[k+size/2+i]*rt[i];
@@ -145,7 +161,7 @@ namespace tbb	{
 	    for(register int i=0; i<n; i++)   a[i]= temp[i];
 	}
 	void circ_conv(const double* A, const double* B, double* C, int n)   {
-	    if(n<=4096) {
+	    if(n<=1024) {
 	        for(register int t=0; t<n; ++t)    {
                 double *c= C+t;	*c= 0;
 				for(const double *a= A+t, *b= B; b< B+n; ++b, (a==A)?(a= A+n-1):(--a))
