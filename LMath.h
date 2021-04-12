@@ -1,21 +1,31 @@
-#define debug
-
-#ifndef TBBLMAT_H //LMath.h ver:3.3
+#ifndef TBBLMAT_H //LMath.h ver:3.4.1
 #define TBBLMAT_H
 
-#include "LInt.h"
 #ifdef debug
+#include "LInt.h"
 #include "LFloat.h"
 #endif
+#ifdef TBBLINT_H
 namespace tbb {
-    LInt powrt(const LInt&, int);
+    //Declare
+    LInt _recip_2       (const LInt &);
+    LInt _recip_m       (const LInt &, int);
+    LInt abs            (const LInt &);
+    LInt sqrt           (const LInt &);
+    LInt pow            (const LInt &, int);
+    LInt powrt          (const LInt &, int);
+    LInt gcd            (LInt, LInt);
+    LInt lcm            (LInt, LInt);
+    LInt permutation    (int, int);
+    LInt factorial      (int);
+    //Defination
     LInt abs(const LInt &B)	{
 		LInt ans(B);
 		if (B.sign<0) ans.sign=-B.sign;
 		return ans;
 	};
     //get 10000^2k/sqrt(A) when A has 2k or 2k-1 bits
-    LInt recip_2(const LInt &A) {
+    LInt _recip_2(const LInt &A) {
         if(A.isNaN())   return false;
         if(A.d<=2)	{
             if(A.d==0)	return 0;
@@ -32,7 +42,7 @@ namespace tbb {
         int _2n= (A.d%2==0)?A.d:A.d+1;
         int _2k= (_2n+2)/4*2;
         LInt _A, A2k(A.num+(_2n-_2k), _2k+A.d-_2n),_A2k,_rA;
-        _A2k= recip_2(A2k);
+        _A2k= _recip_2(A2k);
         _A2k<<= (_2n-_2k)/2;
         _A=(3*_A2k).div2()-((_A2k*_A2k*_A2k*A).div2()>>(2*_2n));
         _rA=(LInt(1)<<(2*_2n))-A*_A*_A;
@@ -56,7 +66,7 @@ namespace tbb {
         if(base.sign==2)    return base;
 		if(base.sign==0)	return 0;
         int _2n= (base.d%2==0)? base.d: base.d+1;
-		LInt ans= (base*recip_2(base))>>_2n;
+		LInt ans= (base*_recip_2(base))>>_2n;
 		LInt R=base-ans*ans;
 		u64 delta;
 		for(delta=1;;delta*=2)	{
@@ -93,13 +103,13 @@ namespace tbb {
         return S;
     }
 
-    LInt recip_m(const LInt &A, int m)    {
+    LInt _recip_m(const LInt &A, int m)    {
         if(A.abnormal())    return A;
         if(A.d<=m)  return (powrt(A, m)<<m)/A;
         int n= (A.d+m-1)/m;
         int k= (n+1)/2;
         LInt Ak(A.num+m*(n-k), A.d-m*(n-k));
-        LInt _Ak= recip_m(Ak, m);   _Ak<<= n-k;
+        LInt _Ak= _recip_m(Ak, m);   _Ak<<= n-k;
         LInt _AN= pow(A, m-1), base= LInt(n*m*m);
         LInt _A= (m+1)*_Ak/m- ((_AN* pow(_Ak, m+1)/ m)>>(n*m*m));
         u64 delta= 1;
@@ -137,7 +147,7 @@ namespace tbb {
             return down;
         }
         int n= (A.d+m-1)/m;
-        LInt ans= (A* recip_m(A, m))>>(n*m);
+        LInt ans= (A* _recip_m(A, m))>>(n*m);
         u64 delta= 1;
         for(delta=1; ; delta<<= 1)  {
             if(pow(ans+delta, m)>A) break;
@@ -150,7 +160,7 @@ namespace tbb {
         return ans;
     }
 
-    const LInt gcd(LInt a, LInt b)  {
+    LInt gcd(LInt a, LInt b)  {
         if(a.isNaN()||b.isNaN())    return false;
         LInt pow= 1;
 		int div= 0;
@@ -165,90 +175,156 @@ namespace tbb {
         }
         return a* pow;
     }
-    const LInt lcd(const LInt &a, const LInt &b)  {
+    LInt lcd(const LInt &a, const LInt &b)  {
         return (a*b)/gcd(a,b);
     }
 
-    const LInt permutation(int n, int m)    {
+    LInt permutation(int n, int m)    {
         if(m<0) return false;
         if(m>n||m<=0)   return 0;
         if(m==1)    return n;
         return permutation(n, m/2)* permutation(n-m/2, m-m/2);
     }
-    inline const LInt factorial(int n) {return permutation(n, n);}
-    #ifdef TBBLFLT_H
-        LFloat abs(const LFloat & A)    {
-            LFloat B= A;
-            B.base.sign= -B.base.sign;
-            return B;
-        }
-        LFloat sqrt(const LFloat & A) {
-            if(A.negative()) return LFloat(LInt(false), 0);
-            if(A.abnormal()) return A;
-            const int n= tbb::_LFloat_prec;
-            LInt u= A.base; i64 t= A.pow;
-            t-=(2*n-u.d);   u<<=(2*n-u.d);
-            if(t%2!=0)  t++, u>>=1;
-            return LFloat(sqrt(u), t/2);
-        }
-        LFloat pow(const LFloat& A, int n) {
-            if(n<0) return 1.0/pow(A, -n);
-            if(A.isNaN()||(A.meanless()&&n==0))   return false;
-            if(A.isinf())    {return (A.negative()&&n%2==0)? -A: A;}
-            if(A.zero())    return A;
-            LFloat ans= 1, base= A;
-            for(unsigned l=1; l<=unsigned(n); l<<=1)   {
-                if(l&n) ans= ans* base;
-                base= base* base;
-            }
-            return ans;
-        }
-
-        template<>
-        LFloat mul_pow10(const LFloat & x, int m)   {
-            if(x.abnormal())    return x;
-            int flr4, mod4;
-            mod4= (m%4+4)%4;    flr4= (m-mod4)/4;
-            LFloat ans= x* pow10(mod4);
-            ans.pow+= flr4;
-            return ans;
-        }
-
-        template<>
-        LFloat pow10(int k) {return mul_pow10<LFloat>(1, k);}
-
-        LFloat pow_pow10(const LFloat & x, int m)   {
-            LFloat S= 1;
-            for(int i=0; i<m; ++i)  S*= x;
-            for(int i=0; i<m; ++i)  S= pow(x, 5);
-            return S;
-        }// return x^(10^m)
-        LFloat exp(const LFloat& x)   {
-            if(x.isNaN())   return x;
-            if(x.isinf() && x.positive())   return x;
-            if(x.isinf() && x.negative())   return 0;
-            if(x==0)    return 1;
-            if(x > (double(_LFloat_prec)+INT_MAX)*log(10000))   return LInt("inf");
-            if(x < (double(INT_MIN))*log(10000))    return 0;
-
-            if(x>1) return pow_pow10( exp(LFloat(x.base, -x.base.d)), 4 * (x.pow+x.base.d) );
-            int precision= _LFloat_prec * 4;
-            int bound= int(std::sqrt(precision));
-            LFloat B= pow10<LFloat>(-bound);
-            if(x>B) {
-                int delta_pow= 4*x.pow + x.base.digit() + bound;
-                LFloat x_= mul_pow10(x, -delta_pow);
-                return pow_pow10(exp(x_), delta_pow);
-            }
-
-            _LFloat_prec= (precision + Log_2(precision))/4 + 1;
-            int N= precision / bound +1;
-            LFloat S= 1;
-            for(int i=N; i>0; --i)  S= S* (x/i) + 1;
-            _LFloat_prec= precision/4;
-            S.sho();
-            return S;
-        }
-    #endif
+    inline LInt factorial(int n) {return permutation(n, n);}
 }
+#endif //TBBLINT_H
+#ifdef TBBLFLT_H
+namespace tbb{
+    //Declare
+    template<>  LFloat mul_pow10    (const LFloat &, int);
+    template<>  LFloat pow10        (int);
+    LFloat pow_pow10    (const LFloat &, int);
+    LFloat abs          (const LFloat &);
+    LFloat sqrt         (const LFloat &);
+    LFloat pow          (const LFloat &, int);
+    LFloat exp          (const LFloat &);
+    LFloat ln1p         (const LFloat &);
+    LFloat ln           (const LFloat &);
+    LFloat arctan       (const LFloat &);
+    LFloat sin          (const LFloat &);
+    LFloat cos          (const LFloat &);
+    LFloat tan          (const LFloat &);
+
+    //Defination
+    LFloat abs(const LFloat & A)    {
+        LFloat B= A;
+        if(B.base.sign<0)   B.base.sign= -B.base.sign;
+        return B;
+    }
+    LFloat sqrt(const LFloat & A) {
+        if(A.negative()) return LFloat(LInt(false), 0);
+        if(A.abnormal()) return A;
+        const int n= tbb::_LFloat_prec;
+        LInt u= A.base; i64 t= A.pow;
+        t-=(2*n-u.d);   u<<=(2*n-u.d);
+        if(t%2!=0)  t++, u>>=1;
+        return LFloat(sqrt(u), t/2);
+    }
+    LFloat pow(const LFloat& A, int n) {
+        // std::cerr<<std::scientific<<A<<'\t'<<n<<std::defaultfloat<<endl;
+        if(n<0) return 1.0/pow(A, -n);
+        if(A.isNaN()||(A.meanless()&&n==0))   return false;
+        if(A.isinf())    {return (A.negative()&&n%2==0)? -A: A;}
+        if(A.zero())    return A;
+        LFloat ans= 1, base= A;
+        for(unsigned l=1; l<=unsigned(n); l<<=1)   {
+            if(l&n) ans= ans* base;
+            base= base* base;
+        }
+        return ans;
+    }
+
+    template<>
+    LFloat mul_pow10(const LFloat & x, int m)   {
+        if(x.abnormal())    return x;
+        int flr4, mod4;
+        mod4= (m%4+4)%4;    flr4= (m-mod4)/4;
+        LFloat ans= x* pow10(mod4);
+        ans.pow+= flr4;
+        return ans;
+    }
+
+    template<>
+    LFloat pow10(int k) {return mul_pow10<LFloat>(1, k);}
+
+    LFloat pow_pow10(const LFloat & x, int m)   {
+        LFloat S= x, S_2, S_3;
+        for(int i=0; i<m; ++i)  {
+            S= S.pow2();
+            S_2= S*S;   S_3= S_2* S; S= S_2* S_3;
+        }
+        return S;
+    }// return x^(10^m)
+    LFloat exp(const LFloat& x)   {
+        if(x.isNaN())   return x;
+        if(x.isinf() && x.positive())   return x;
+        if(x.isinf() && x.negative())   return 0;
+        if(x==0)    return 1;
+        if(x<0)     return 1/exp(-x);
+        if(x > (double(_LFloat_prec)+INT_MAX)*std::log(10000))   return LInt("inf");
+        if(x < (double(INT_MIN))*std::log(10000))    return 0;
+
+        int precision= _LFloat_prec * 4;
+        if(x>1) {
+            _LFloat_prec= (precision + 4 * (x.pow+x.base.d) )/4 + 1;
+            LFloat res= pow_pow10( exp(LFloat(x.base, -x.base.d)), 4 * (x.pow+x.base.d) );
+            _LFloat_prec= precision / 4;
+            res.sho();
+            return res;
+        }
+        int bound= int(std::sqrt(precision)/2.3);
+        LFloat B= pow10<LFloat>(-bound);
+        if(x>B) {
+            int delta_pow= 4*x.pow + x.base.digit() + bound;
+            _LFloat_prec= (precision + delta_pow)/4 + 1;
+            LFloat x_= mul_pow10(x, -delta_pow);
+            LFloat res= pow_pow10(exp(x_), delta_pow);
+            _LFloat_prec= precision / 4;
+            res.sho();
+            return res;
+        }
+
+        _LFloat_prec= (precision + Log_2(precision))/4 + 1;
+        int N= precision / bound +1;
+        LFloat S= 1;
+        for(int i=N; i>0; --i)  S= S/i*x + 1;
+        _LFloat_prec= precision/4;
+        S.sho();
+        return S;
+    }
+    LFloat arctan(const LFloat& x)  {
+        if(x.isNaN()||x.zero())   return x;
+        if(x.isinf() && x.negative())   return arctan(-1)*2;
+        if(x.isinf() && x.positive())   return arctan(1)*2;
+        if(x<0) return -arctan(-x);
+        if(x>1) return arctan((sqrt(x*x+1)-1)/x)*2;
+
+        struct{
+            LFloat operator()(const LFloat& t) {return t / (sqrt(t*t+1)+1);}
+        } scale_func;
+        int precision= _LFloat_prec * 4;
+        int bound= int(std::sqrt(0.2006866637759875 * precision / 16));    //bound= Sqrt(2 Lg 2*p/3)
+        LFloat B= pow10<LFloat>(-bound);
+        int n= precision/bound +1;  //expansion terms count
+        int k= 0;   //scale times
+
+        _LFloat_prec= (precision + Log_2(precision) + Log_2(k))/4 + 1;
+        LFloat x_scaled= x;
+        x_scaled.sho();
+        while(x_scaled > B) {   //scaling
+            x_scaled= scale_func(x_scaled);
+            ++k;
+        }
+        LFloat y_scaled= 0, x2= x_scaled * x_scaled;
+        for(int i= 4*n-1; i>=1; i-=2)   y_scaled= -x2*y_scaled + LFloat(1.0)/i;
+        y_scaled*= x_scaled;
+        LFloat& y= y_scaled;
+        for(int i= 0; i<k; ++i) y= y*2;
+        _LFloat_prec= precision/4;
+        y.sho();
+        return y;
+    }
+}
+#endif //TBBLFLT_H
+
 #endif
