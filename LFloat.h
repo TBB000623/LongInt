@@ -1,11 +1,11 @@
-#ifndef TBBLFLT_H // LFloat.h ver 3.2.3
+#ifndef TBBLFLT_H // LFloat.h ver 3.4
 #define TBBLFLT_H
 
+#ifdef TBBLINT_H
 #include <climits>
 #include <sstream>
-#include "LInt.h"
 namespace tbb   {
-	int _LFloat_prec= 25;
+	int _LFloat_prec= 2000;
 	struct LFloat   {
 		LInt base;
 		int pow;
@@ -29,6 +29,12 @@ namespace tbb   {
 		inline bool meanless(void) const    {return base.meanless();}
 		inline bool abnormal(void) const    {return base.abnormal();}
 		void sho(void);
+		int order(void)	const	{
+			if(isNaN())	return 0;
+			if(isinf())	return positive() ? INT_MAX : INT_MIN;
+			if(zero())	return INT_MIN;
+			return base.digit() + 4*pow;
+		}
 		void print(void) const;
 		const string print_str(void)  const;
 	//overload operator to calc
@@ -42,12 +48,9 @@ namespace tbb   {
 		LFloat & operator-=(const LFloat &);
 		LFloat & operator*=(const LFloat &);
 		LFloat & operator/=(const LFloat &);
-		
-		friend LFloat operator+(double, const LFloat &);
-		friend LFloat operator-(double, const LFloat &);
-		friend LFloat operator*(double, const LFloat &);
-		friend LFloat operator/(double, const LFloat &);
 
+		LFloat operator*(int)	const;
+		LFloat operator/(int)	const;
 	//compare operator
 		inline bool operator==(const LFloat &)	const;
 		inline bool operator!=(const LFloat &)	const;
@@ -55,14 +58,15 @@ namespace tbb   {
 		inline bool operator>(const LFloat &)	const;
 		inline bool operator<=(const LFloat &)	const;
 		inline bool operator>=(const LFloat &)	const;
+	//other functions
+		LFloat pow2()	const;
 	//precision for LFloat
-		int precision();
-		int precision(int);
-	//friend function for IO
-		friend std::istream & operator>>(std::istream &, tbb::LFloat &);
-		friend std::ostream & operator<<(std::ostream &, const tbb::LFloat &);
+		static int precision();
+		static int precision(int);
 	};
 }
+std::ostream & operator<<(std::ostream &, const tbb::LFloat &);
+std::istream & operator>>(std::istream &, tbb::LFloat &);
 
 tbb::LFloat::LFloat(int i):base(i),pow(0){
 	int zero= 0;
@@ -228,6 +232,8 @@ tbb::LFloat tbb::LFloat::operator-(const LFloat &B) const	{
 }
 tbb::LFloat tbb::LFloat::operator*(const LFloat &B) const	{
 	const LFloat &A= *this;
+	// static int u= 0;
+	// u++;	std::cerr<<u<<endl;
 	if(A.abnormal()||B.abnormal())  return LFloat(A.base*B.base, 0);
 	LInt ans_base= A.base* B.base;  i64 ans_pow= i64(A.pow)+ i64(B.pow);
 	if(ans_pow>INT_MAX) return LFloat(LInt(false, ans_base.sign), 0);
@@ -256,10 +262,39 @@ tbb::LFloat & tbb::LFloat::operator-=(const LFloat &B)	{return *this= *this-B;}
 tbb::LFloat & tbb::LFloat::operator*=(const LFloat &B)	{return *this= *this*B;}
 tbb::LFloat & tbb::LFloat::operator/=(const LFloat &B)	{return *this= *this/B;}
 
+tbb::LFloat tbb::LFloat::operator*(int B)	const	{
+	const LFloat &A= *this;
+	if(A.isNaN()||A.zero())	return A;
+	if(A.isinf()&&B!=0)	return B>0 ? A : -A;
+	if(A.isinf()&&B==0)	return tbb::LInt(false);
+	return LFloat(A.base*B, A.pow);
+}
+tbb::LFloat tbb::LFloat::operator/(int B)	const	{
+	const LFloat &A= *this;
+	if(A.isNaN()|| (A.zero()&&B==0) )	return tbb::LInt(false);	//return NaN
+	if(A.isinf())	return B>=0 ? A : -A;	//return inf
+	if(A.zero())	return 0;
+	if(B==0)	return tbb::LInt(false, B);	//return inf;
+
+	int k= _LFloat_prec + 3 - A.base.d;
+	return LFloat((A.base<<k)/B, A.pow-k);
+}
+
 tbb::LFloat operator+(double A, const tbb::LFloat & B)	{return tbb::LFloat(A)+B;}
 tbb::LFloat operator-(double A, const tbb::LFloat & B)	{return tbb::LFloat(A)-B;}
 tbb::LFloat operator*(double A, const tbb::LFloat & B)	{return tbb::LFloat(A)*B;}
 tbb::LFloat operator/(double A, const tbb::LFloat & B)	{return tbb::LFloat(A)/B;}
+
+tbb::LFloat tbb::LFloat::pow2()	const	{
+	if(abnormal())  return LFloat(base.pow2(), 0);
+	LInt ans_base= base.pow2();  i64 ans_pow= 2*i64(pow);
+	if(ans_pow>INT_MAX) return LFloat(LInt(false, ans_base.sign), 0);
+	if(ans_pow<INT_MIN) {
+		if(ans_pow+ ans_base.d< INT_MIN)    return 0;
+		return LFloat(ans_base>>(INT_MIN-ans_pow), INT_MIN);
+	}
+	return LFloat(ans_base, ans_pow);
+}
 
 inline bool tbb::LFloat::operator==(const LFloat &B) const	{
 	const LFloat & A= *this;
@@ -312,11 +347,15 @@ std::ostream & operator<<(std::ostream & os, const tbb::LFloat & A) {
 		}
 		return os;
 	}
+	//sign char
+	tbb::LFloat B;
+	if(A.negative())	os.put('-'), B= -A;
+	else B= A;
 	//get format flags
-	int p= std::max(os.precision(), 0);
+	int p= std::max(int(os.precision()), 0);
 	std::ios_base::fmtflags flag= os.flags() & std::ios_base::floatfield;
 	if(flag == std::ios_base::fixed)	{//fixed mode
-		tbb::LInt B_normal= tbb::mul_pow10(A.base, 4*A.pow+p+1); //A= B*10^-p; B has a digit after point
+		tbb::LInt B_normal= tbb::mul_pow10(B.base, 4*B.pow+p+1); //A= B*10^-p; B has a digit after point
 		B_normal= tbb::mul_pow10(B_normal, -1) + int((B_normal[0]%10)>=5);
 		if(B_normal.zero())	{
 			os.put('0');
@@ -342,8 +381,8 @@ std::ostream & operator<<(std::ostream & os, const tbb::LFloat & A) {
 		return os;
 	} else
 	if(flag == std::ios_base::scientific)	{//scientific mode
-		int power_d= A.base.digit()-(p+1)-1;
-		tbb::LInt B_normal= tbb::mul_pow10(A.base, (p+1)-A.base.digit()+1);
+		int power_d= B.base.digit()-(p+1)-1;
+		tbb::LInt B_normal= tbb::mul_pow10(B.base, (p+1)-B.base.digit()+1);
 		if((B_normal[0]%10)>=5)	B_normal+=10;
 		power_d+= B_normal.digit()-(p+1);
 		B_normal= tbb::mul_pow10(B_normal, (p+1)-B_normal.digit());
@@ -355,35 +394,12 @@ std::ostream & operator<<(std::ostream & os, const tbb::LFloat & A) {
 			for(int t=1; t<=p; ++t)	os.put(B_str[t]);
 		}
 		os.put('e');
-		int e_power= 4*A.pow + power_d + p;
+		int e_power= 4*B.pow + power_d + p;
 		os.put(e_power>=0?'+':'-');
 		os << tbb::Fast_0_out_char(std::abs(e_power), 0, 3);
 		return os;
-		// char *digit_buff= new char[p+7];
-		// for(int i=0; i<p+7; ++i)	digit_buff[i]= '0';
-		// char *pt_dbuf= digit_buff;
-		// const char* highest_munber= tbb::i2s(A.base[A.base.d-1]);
-		// //get the highest number
-		// for(const char *pt_hnum= highest_munber; *pt_hnum!=0&&(pt_dbuf-digit_buff)<p+3; pt_hnum++, pt_dbuf++)	{
-		// 	*pt_dbuf= *pt_hnum;
-		// 	if(pt_dbuf==digit_buff)	*(++pt_dbuf)='.'; //add point . after the first digit
-		// } //copy the highest number
-		// for(int i=A.base.d-2; i>=0&&(pt_dbuf-digit_buff)<p+3; i--)	{
-		// 	const char* digit= tbb::Fast_0_out_char(A.base[i]);
-		// 	for(int j=0; j<4; j++, pt_dbuf++)	*pt_dbuf= digit[j];
-		// } //copy last number until
-		// int end_char= p+1;	while(digit_buff[end_char]=='0')	end_char--;	digit_buff[end_char+1]= '\0';
-		// //delete all end_0
-		// if(A.negative())	os.put('-');
-		// for(int i=0; i<=end_char; ++i)	os.put(digit_buff[i]);
-		// os.put('e');
-		// int e_power= 4*A.pow+A.base.digit()-1;	os.put(e_power>=0?'+':'-');
-		// os << tbb::Fast_0_out_char(std::abs(e_power), 0, 3);
-		// //output all
-		// delete [] digit_buff;
-		// return os;
 	} else	{//default mode
-		os << A.print_str();
+		os << B.print_str();
 	}
 	return os;
 }
@@ -432,4 +448,6 @@ int tbb::LFloat::precision(int i){
 	tbb::_LFloat_prec= i;
 	return bef;
 }
+#endif // TBBLINT_H
+
 #endif

@@ -1,30 +1,23 @@
 #ifndef TBBLINT_H
 #define TBBLINT_H
 
-#include <iostream>	//version:3.2.2.1
+#include <iostream>	//version:3.4.1
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
 #include <cctype>
 #include <cstring>
 #include <string>
-
 typedef unsigned long long u64;
 typedef long long i64;
 typedef int i32;
 typedef unsigned u32;
 namespace tbb	{
 	const int vol= 131072;
-	const double Pi= 3.14159265358979323846;
 	using std::cin;
 	using std::cout;
 	using std::endl;
 	using std::string;
-
-	using std::sin;
-	using std::cos;
-	using std::sqrt;
-	using std::pow;
 
 	inline int s2i(const char *begin, const char *end) {//converse string to int
 		int tmp= 0, sig= 1;
@@ -111,13 +104,16 @@ namespace tbb	{
 	    inline complex operator / (const complex &B) const {return (*this)*B.conj()/(B*B.conj()).x;}
 	    inline complex & operator += (const complex &B) {return *this= *this+ B;}
 	};
+	complex complex_exp(int i, int s) {
+		const double Pi= 3.14159265358979323846;
+		return complex(std::cos(2*Pi*i/s), std::sin(2*Pi*i/s));
+	}
 	complex root_cplx[vol];
 	bool pre_init= false;
 	void init_root()  {
-	    if(pre_init)   return ;
-	    pre_init= true;
 	    int i;  complex *a, *b, *c, *d;
 	    double x, y;
+		const double Pi= 3.14159265358979323846;
 	    complex* root= root_cplx;
 	    for(i=0, a=root, b= c= root+vol/2, d= root+vol; i<=vol/4; i++, a++, b--, c++, d--)  {
 	        x= std::cos(2*i*Pi/vol), y= std::sin(2*i*Pi/vol);
@@ -125,11 +121,23 @@ namespace tbb	{
 	        *c= complex(-x, -y);*d= complex(x, -y);
 	    }
 	}
-	void DFT(const complex* A, complex* a, int n, bool inv= false)  {
+	void DFT(const complex* A, complex* a, int n, bool inv= false)	{
 	    if(n==0)    {a[0]= A[0]; return ;}
 	    int log= 0;
 	    {int ans;   for(ans= 1; ans<n; log++, ans<<=1)  if(ans>n)   return ;}
-	    if(!pre_init)   init_root();
+	    if(!tbb::pre_init)   init_root(), tbb::pre_init= true;
+		int factor_list[32], factor_length;
+		struct{
+			int operator()(int fnum, int* flist)	{
+				int n= 0;
+				for(int i=2; i*i<=fnum; ++i)	{
+					while(fnum%i==0)	flist[n++]= i, fnum/=i;
+				}
+				if(fnum!=1)	flist[n++]= fnum;
+				return n;
+			}
+		} Factor;
+		factor_length= Factor(n, factor_list);
 	    static int rev[vol], last_n= 0;
 	    static complex rt[vol/2+1];
 	    static complex temp[vol];
@@ -140,7 +148,7 @@ namespace tbb	{
 	    }
 	    for(register int i=0; i<n; i++)   temp[i]= A[rev[i]];
 	    for(register int size= 2; size<= n; size<<=1) {
-	        for(register int i=0; i<size/2; i++)  rt[i]= inv?root_cplx[vol- vol/size*i]:root_cplx[vol/size*i];
+	        for(register int i=0; i<size/2; i++)  rt[i]= inv?complex_exp(-i, size):complex_exp(i, size);
 	        for(int k=0; k<n; k+=size)  {
 	            for(int i=0; i<size/2; i++) {
 	                complex q= temp[k+size/2+i]*rt[i];
@@ -154,26 +162,42 @@ namespace tbb	{
 	}
 	void circ_conv(const double* A, const double* B, double* C, int n)   {
 	    if(n<=1024) {
-	        for(register int k=0; k<n; k++) C[k]= 0.0;
-	        for(register int i=0; i<n; i++) for(register int j=0; j<n; j++) C[(i+j)%n]+= A[i]* B[j];
+	        for(register int t=0; t<n; ++t)    {
+                double *c= C+t;	*c= 0;
+				for(const double *a= A+t, *b= B; b< B+n; ++b, (a==A)?(a= A+n-1):(--a))
+					*c+= *a * *b;
+            }
 	        return ;
 	    }
 	    typedef complex cmxd;
 	    int log= 0;
 	    {int ans;   for(ans= 1; ans<n; log++, ans<<=1)  if(ans>n)   return ;}
-	    if(!pre_init)   init_root();
-	    static cmxd P[vol/2], Q[vol/2];
+	    if(!tbb::pre_init)   init_root(), tbb::pre_init= true;
+		static int last_n;
+		static double A_0[vol], B_0[vol];
+		static cmxd P[vol/2], Q[vol/2];
 	    static cmxd a_0[vol/2], a_1[vol/2], b_0[vol/2], b_1[vol/2];
 	    static cmxd c_0[vol/2], c_1[vol/2];
-	    for(register int i=0; i<n/2; i++)   P[i].x= A[i<<1], P[i].y= A[(i<<1)|1];
-	    DFT(P, P, n/2, false);
-	    Q[0]= P[0].conj();  for(register int i=1; i<n/2; i++)   Q[i]= P[n/2- i].conj();
-	    for(register int i=0; i<n/2; i++)   a_0[i]= (P[i]+Q[i])/2, a_1[i]= ((P[i]-Q[i])/2).left();
+		bool checkA, checkB, checkAB;	int it;
+		for(checkA= (last_n==n), it= 0; checkA&&it<n; it++)	checkA= A_0[it]==A[it];
+		if(!checkA)	{
+			for(register int i=0; i<n/2; i++)   P[i].x= A_0[i<<1]= A[i<<1], P[i].y= A_0[(i<<1)|1]= A[(i<<1)|1];
+		    DFT(P, P, n/2, false);
+		    Q[0]= P[0].conj();  for(register int i=1; i<n/2; i++)   Q[i]= P[n/2- i].conj();
+		    for(register int i=0; i<n/2; i++)   a_0[i]= (P[i]+Q[i])/2, a_1[i]= ((P[i]-Q[i])/2).left();
+		}
 
-	    for(register int i=0; i<n/2; i++)   P[i].x= B[i<<1], P[i].y= B[(i<<1)+1];
-	    DFT(P, P, n/2, false);
-	    Q[0]= P[0].conj();  for(register int i=1; i<n/2; i++)   Q[i]= P[n/2- i].conj();
-	    for(register int i=0; i<n/2; i++)   b_0[i]= (P[i]+Q[i])/2, b_1[i]= ((P[i]-Q[i])/2).left();
+		for(checkAB= true, it= 0; checkAB&&it<n; it++)	checkAB= A[it]==B[it];
+		if(checkAB)	for(it= 0; it<n/2; it++)	b_0[it]= a_0[it], b_1[it]= a_1[it];
+		else	{
+			for(checkB= (last_n==n), it= 0; checkB&&it<n; it++)	checkB= B_0[it]==B[it];
+			if(!checkB)	{
+				for(register int i=0; i<n/2; i++)   P[i].x= B_0[i<<1]= B[i<<1], P[i].y= B_0[(i<<1)|1]= B[(i<<1)|1];
+				DFT(P, P, n/2, false);
+				Q[0]= P[0].conj();  for(register int i=1; i<n/2; i++)   Q[i]= P[n/2- i].conj();
+				for(register int i=0; i<n/2; i++)   b_0[i]= (P[i]+Q[i])/2, b_1[i]= ((P[i]-Q[i])/2).left();
+			}
+		}
 
 	    for(register int i=0; i<n/2; i++)   {
 	        c_0[i]= a_0[i]* b_0[i]+ a_1[i]* b_1[i]* root_cplx[2*vol/n*i];
@@ -182,15 +206,17 @@ namespace tbb	{
 	    for(register int i=0; i<n/2; i++)   P[i]= c_0[i]+ c_1[i].right();
 	    DFT(P, P, n/2, true);
 	    for(register int i=0; i<n/2; i++)   C[i<<1]= P[i].x, C[(i<<1)|1]= P[i].y;
+		last_n= n;
 	}
+
 	struct LInt	{
 	//elements
 		short sign;
 		int d;
 		u32 *num;
-	//define function/initial
+	//define function/ initial
 		LInt (void ):sign(0),d(0),num(0){}
-		LInt (bool b, int code= 0):sign(0),d(0)	{
+		LInt (bool b, int code= 0):sign(0), d(0)	{
 			if(b)	{num=new u32[0];}
 			else	{
 				num= 0;
@@ -484,6 +510,9 @@ namespace tbb	{
 			ans.sho();
 			return ans;
 		}
+		LInt pow2()	const	{
+			return (*this)*(*this);
+		}
 	//Operator Function
 		const LInt operator<<(int k) const {
 			if(abnormal())	return *this;
@@ -611,12 +640,17 @@ namespace tbb	{
 			ans.d=N+2;	ans.num= new u32[ans.d]();
 			ans.sign=A.sign*B.sign;
 			static double a[vol], b[vol], c[vol];
-			for(x=0; x<A.d; x++)	a[x]= A.num[x];
-			for(y=0; y<B.d; y++)	b[y]= B.num[y];
-			for(x=A.d; x<N; x++)	a[x]= 0;
-			for(y=B.d; y<N; y++)	b[y]= 0;
-			for(x=0; x<N; x++)		c[x]= 0;
-			circ_conv(a, b, c, N);
+			if(A.d<=Log_2(B.d)||Log_2(A.d)>=B.d)	{
+				for(x=0; x<N; x++)		c[x]= 0;
+				for(x=0; x<A.d; x++)	for(y=0; y<B.d; y++)	c[x+y]+= A.num[x]* B.num[y];
+			}	else	{
+				for(x=0; x<A.d; x++)	a[x]= A.num[x];
+				for(y=0; y<B.d; y++)	b[y]= B.num[y];
+				for(x=A.d; x<N; x++)	a[x]= 0;
+				for(y=B.d; y<N; y++)	b[y]= 0;
+				for(x=0; x<N; x++)		c[x]= 0;
+				circ_conv(a, b, c, N);
+			}
 			double carry=0.0;
 			for(int i=0; i<N; i++)	{
 				double temp=round(c[i])+carry;
@@ -864,8 +898,8 @@ namespace tbb	{
 			A= in_s;
 			return is;
 		}
-	// converse to other classical type
 	#if __cplusplus >= 201103L
+		// converse to other classical type
 		explicit operator bool() const	{
 			return isinf()||isNaN();
 		}
@@ -874,6 +908,19 @@ namespace tbb	{
 			for(int i=0; i<d ;i++)	temp= temp* 10000+ num[i];
 			if(sign<0)	temp= -temp;
 			return temp;
+		}
+
+		// about move semantics
+		LInt(LInt &&rvalue):sign(rvalue.sign), d(rvalue.d), num(rvalue.num) {
+			rvalue.num= nullptr;
+		}
+		LInt& operator=(LInt &&rhs)	{
+			if(this != &rhs)	{
+				std::swap(sign, rhs.sign);
+				std::swap(d, rhs.d);
+				std::swap(num, rhs.num);
+			}
+			return *this;
 		}
 	#endif
 	};
@@ -898,9 +945,10 @@ namespace tbb	{
         }
         return (divi>=0)?((A*t1)<<divi):((A*t1)>>-divi);
     }
+	LInt mul_pow10(const int &a, int k)	{return mul_pow10(LInt(a), k);}
 
 	template <>
 	LInt pow10(int k)   {return mul_pow10(1,k);}
 }
-const tbb::LInt inf("+inf"), zero(0);
+
 #endif
