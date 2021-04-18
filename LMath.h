@@ -1,4 +1,4 @@
-#ifndef TBBLMAT_H //LMath.h ver:3.4.1
+#ifndef TBBLMAT_H //LMath.h ver:3.4.2
 #define TBBLMAT_H
 
 #ifdef debug
@@ -193,6 +193,10 @@ namespace tbb{
     //Declare
     template<>  LFloat mul_pow10    (const LFloat &, int);
     template<>  LFloat pow10        (int);
+    LFloat _sin         (const LFloat &, int);
+    LFloat _cos         (const LFloat &, int);
+    LFloat _tan         (const LFloat &, int);
+    LFloat _pi          (void);
     LFloat pow_pow10    (const LFloat &, int);
     LFloat abs          (const LFloat &);
     LFloat sqrt         (const LFloat &);
@@ -234,6 +238,7 @@ namespace tbb{
         return ans;
     }
 
+    // Exponential & logarithm functions
     template<>
     LFloat mul_pow10(const LFloat & x, int m)   {
         if(x.abnormal())    return x;
@@ -291,6 +296,57 @@ namespace tbb{
         _LFloat_prec= precision/4;
         S.sho();
         return S;
+    }
+
+    // Triangle functions
+    LFloat _pi(void)    {
+        static LFloat inner_pi= 3;
+        static int pi_precsion= 0;
+        if(_LFloat_prec < pi_precsion)  {
+            LFloat ret = inner_pi;
+            ret.sho();
+            return ret;
+        }
+        pi_precsion= _LFloat_prec;
+        if(_LFloat_prec > 1000) return inner_pi = 4 * arctan(1);
+        static LInt numerator= 1, denominator= 1;
+        static LInt iter_factorial= 1;
+        static int done_iter_times= 0;
+        int new_iter_times= 6.09832411290916 + 13.28771237954945 *_LFloat_prec;
+        LInt delta_numerator=0, delta_denominator= 1, delta_iter_factorial= 1;
+        for(int k= new_iter_times; k > done_iter_times; --k)    {
+            delta_numerator+=   delta_denominator;
+            delta_numerator*=   k;
+            delta_denominator*= 2*k+1;
+            delta_iter_factorial*=  k;
+        }
+        numerator= numerator * delta_denominator + iter_factorial * delta_numerator;
+        denominator*= delta_denominator;
+        iter_factorial*= delta_iter_factorial;
+        return Div_LInt(numerator, denominator) * 2;
+    }
+    LFloat _sin(const LFloat& x, int k) {
+        if(k<=0)    return _LFloat_nan;
+        if(k%2==0)  --k;
+        LFloat S= 1, x2= x * x;
+        for(; k>1; k-= 2)   S = 1 - x2*S/k/(k-1);
+        return x * S;
+    }
+    LFloat _cos(const LFloat& x, int k) {
+        if(k<0) return _LFloat_nan;
+        if(k%2==1)  --k;
+        LFloat C= 1, x2= x * x;
+        for(; k>0; k-=2)    C = 1 - x2*C/k/(k-1);
+        return C;
+    }
+    LFloat _tan(const LFloat& x, int k) {
+        if(k<=0)    return _LFloat_nan;
+        LFloat S= 1, C= 1, x2= x * x;
+        for(; k>1; --k)
+            if(k%2) S= 1 - x2*S/k/(k-1);
+            else    C= 1 - x2*C/k/(k-1);
+        S *= x;
+        return S / C;
     }
     LFloat arctan(const LFloat& x)  {
         if(x.isNaN()||x.zero())   return x;
