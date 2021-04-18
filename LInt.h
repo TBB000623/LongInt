@@ -1,7 +1,7 @@
 #ifndef TBBLINT_H
 #define TBBLINT_H
 
-#include <iostream>	//version:3.4.1
+#include <iostream>	//version:3.4.1.1
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
@@ -924,6 +924,8 @@ namespace tbb	{
 		}
 	#endif
 	};
+
+	const LInt _LInt_nan;
 
 	template <typename T= LInt>
 	T mul_pow10(const T &, int);
