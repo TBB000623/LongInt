@@ -1,3 +1,6 @@
+#define debug
+
+#ifndef TBBLMAT_H //LMath.h ver:3.5
 #define TBBLMAT_H
 
 #ifdef debug
@@ -192,6 +195,7 @@ namespace tbb{
     //Declare
     template<>  LFloat mul_pow10    (const LFloat &, int);
     template<>  LFloat pow10        (int);
+    LFloat agm_pi       (void);
     LFloat _sin         (const LFloat &, int);
     LFloat _cos         (const LFloat &, int);
     LFloat _tan         (const LFloat &, int);
@@ -238,6 +242,8 @@ namespace tbb{
         }
         return ans;
     }
+
+    //
 
     // Exponential & logarithm functions
     template<>
@@ -300,6 +306,22 @@ namespace tbb{
     }
 
     // Triangle functions
+    LFloat agm_pi(void)	{
+    	int precision= tbb::LFloat::precision() * 4;
+    	tbb::LFloat::precision(std::ceil((precision+Log_2(precision))/4.0));
+    	LFloat a= 1, b= 1/sqrt(LFloat(2));
+    	int n= Log_2(precision);
+    	LFloat S= pow(b-a, 2);
+    	for(int i=1; i<=n; ++i)	{
+    		LFloat an= (a+b)/2, bn= sqrt(a*b);
+    		S+= (1<<i)*pow(bn-an, 2);
+    		a= an, b= bn;
+    	}
+    	LFloat ans= (4*a*a)/(1-S);
+    	tbb::LFloat::precision(precision/4);
+    	ans.sho();
+    	return ans;
+    }
     LFloat _pi(void)    {
         static LFloat inner_pi= 3;
         static int pi_precsion= 0;
@@ -309,22 +331,7 @@ namespace tbb{
             return ret;
         }
         pi_precsion= _LFloat_prec;
-        if(_LFloat_prec > 1000) return inner_pi = 4 * arctan(1);
-        static LInt numerator= 1, denominator= 1;
-        static LInt iter_factorial= 1;
-        static int done_iter_times= 0;
-        int new_iter_times= 6.09832411290916 + 13.28771237954945 *_LFloat_prec;
-        LInt delta_numerator=0, delta_denominator= 1, delta_iter_factorial= 1;
-        for(int k= new_iter_times; k > done_iter_times; --k)    {
-            delta_numerator+=   delta_denominator;
-            delta_numerator*=   k;
-            delta_denominator*= 2*k+1;
-            delta_iter_factorial*=  k;
-        }
-        numerator= numerator * delta_denominator + iter_factorial * delta_numerator;
-        denominator*= delta_denominator;
-        iter_factorial*= delta_iter_factorial;
-        return Div_LInt(numerator, denominator) * 2;
+        return inner_pi= agm_pi();
     }
     LFloat _sin(const LFloat& x, int k) {
         if(k<=0)    return _LFloat_nan;
@@ -420,7 +427,7 @@ namespace tbb{
         int n= precision/bound +1;  //expansion terms count
         int k= 0;   //scale times
 
-        _LFloat_prec= (precision + Log_2(precision) + Log_2(k))/4 + 1;
+        _LFloat_prec= (precision + Log_2(precision) + 3.322*bound)/4 + 1;
         LFloat x_scaled= x;
         x_scaled.sho();
         while(x_scaled > B) {   //scaling
@@ -435,6 +442,39 @@ namespace tbb{
         _LFloat_prec= precision/4;
         y.sho();
         return y;
+    }
+    LFloat arctan2(const LFloat& x)  {
+    	if(x.isNaN()||x.zero())   return x;
+    	if(x.isinf() && x.negative())   return arctan(-1)*2;
+    	if(x.isinf() && x.positive())   return arctan(1)*2;
+    	if(x<0) return -arctan(-x);
+    	if(x>1) return arctan((sqrt(x*x+1)-1)/x)*2;
+
+    	struct{
+    		LFloat operator()(const LFloat& t) {return t / (sqrt(t*t+1)+1);}
+    	} scale_func;
+    	int precision= _LFloat_prec * 4;
+    	int n= std::ceil(std::sqrt(precision/2)*12) + 1;
+    	int bound= std::ceil(1.0*precision/2/n) + 1;  //expansion terms count
+    	LFloat B= pow10<LFloat>(-bound);
+    	int k= 0;   //scale times
+
+    	_LFloat_prec= (precision + Log_2(precision) + 3.322*bound)/4 + 1;
+    	LFloat x_scaled= x;
+    	x_scaled.sho();
+    	while(x_scaled > B) {   //scaling
+    		x_scaled= scale_func(x_scaled);
+    		++k;
+    	}
+    	LFloat z= 1 / (1 + x_scaled * x_scaled);
+    	LFloat y_scaled= 1, t= 1-z;
+    	for(int i= n; i>= 1; --i)	y_scaled= y_scaled*t*2*i/(2*i+1) + 1;
+    	y_scaled*= x_scaled * z;
+    	LFloat& y= y_scaled;
+    	for(int i= 0; i<k; ++i) y= y*2;
+    	_LFloat_prec= precision/4;
+    	y.sho();
+    	return y;
     }
 
     // translate to LInt
