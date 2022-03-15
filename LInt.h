@@ -1,7 +1,7 @@
 #ifndef TBBLINT_H
 #define TBBLINT_H
 
-#include <iostream>	//version:3.4.1
+#include <iostream>	//version:3.5
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
@@ -13,7 +13,8 @@ typedef long long i64;
 typedef int i32;
 typedef unsigned u32;
 namespace tbb	{
-	const int vol= 131072;
+	const int vol = 1 << 18;
+	const int base_vol= vol;
 	using std::cin;
 	using std::cout;
 	using std::endl;
@@ -82,6 +83,21 @@ namespace tbb	{
 		while(A/10!=0)	A/=10;
 		return A;
 	}
+	inline int _conv_length(int n)	{
+		// if(n < 1024)	return 1 << Log_2(n);
+		n = (n+1) / 2;
+		int power_3 = 0, base_3 = 1, min_height = 0x7fffffff, best_length = 0;
+		do{
+			base_3 *= 3, ++power_3;
+			int power_2 = Log_2(n / base_3);
+			int conv_height = 3 * power_3 + 2 * power_2;
+			if(conv_height < min_height)	{
+				min_height = conv_height;
+				best_length = (1 << power_2) * base_3;
+			}
+		}while(base_3 <= n);
+		return best_length * 2;
+	}
 	//structure complex, DFT, FFT & circulate conversion
 	struct complex {
 		double x,y;
@@ -103,29 +119,15 @@ namespace tbb	{
 	    inline complex operator * (const complex &B) const {return complex( (x*B.x-y*B.y) , (x*B.y+y*B.x) );}
 	    inline complex operator / (const complex &B) const {return (*this)*B.conj()/(B*B.conj()).x;}
 	    inline complex & operator += (const complex &B) {return *this= *this+ B;}
+		static complex complex_exp(int i, int s) {
+			const double Pi= 3.14159265358979323846;
+			return complex(std::cos(2*Pi*i/s), std::sin(2*Pi*i/s));
+		}
 	};
-	complex complex_exp(int i, int s) {
-		const double Pi= 3.14159265358979323846;
-		return complex(std::cos(2*Pi*i/s), std::sin(2*Pi*i/s));
-	}
-	complex root_cplx[vol];
 	bool pre_init= false;
-	void init_root()  {
-	    int i;  complex *a, *b, *c, *d;
-	    double x, y;
-		const double Pi= 3.14159265358979323846;
-	    complex* root= root_cplx;
-	    for(i=0, a=root, b= c= root+vol/2, d= root+vol; i<=vol/4; i++, a++, b--, c++, d--)  {
-	        x= std::cos(2*i*Pi/vol), y= std::sin(2*i*Pi/vol);
-	        *a= complex(x, y);  *b= complex(-x, y);
-	        *c= complex(-x, -y);*d= complex(x, -y);
-	    }
-	}
 	void DFT(const complex* A, complex* a, int n, bool inv= false)	{
+        static const int vol = base_vol / 2;
 	    if(n==0)    {a[0]= A[0]; return ;}
-	    int log= 0;
-	    {int ans;   for(ans= 1; ans<n; log++, ans<<=1)  if(ans>n)   return ;}
-	    if(!tbb::pre_init)   init_root(), tbb::pre_init= true;
 		int factor_list[32], factor_length;
 		struct{
 			int operator()(int fnum, int* flist)	{
@@ -139,28 +141,48 @@ namespace tbb	{
 		} Factor;
 		factor_length= Factor(n, factor_list);
 	    static int rev[vol], last_n= 0;
-	    static complex rt[vol/2+1];
+	    static complex rt[vol+1], rt_mat[10][10];
 	    static complex temp[vol];
 	    if(last_n!=n)   {
-	        rev[0]=0, rev[1]= n/2;
-	        for(register int i=2; i<n; i++)  rev[i]=(rev[i&1])|(rev[i>>1]>>1);
-	        last_n= n;
+            rev[0] = 0;
+            int rev_length = 1;
+	        for(int i = factor_length - 1; i >= 0; --i) {
+                int scale = factor_list[i];
+                for(int k = 0; k < rev_length; ++k)   rev[k] *= scale;
+                for(int j = 1; j < scale; ++j)
+                    for(int k = 0; k < rev_length; ++k)
+                        rev[j * rev_length + k] = j + rev[k];
+                rev_length *= scale;
+            }
+            last_n = n;
 	    }
+
 	    for(register int i=0; i<n; i++)   temp[i]= A[rev[i]];
-	    for(register int size= 2; size<= n; size<<=1) {
-	        for(register int i=0; i<size/2; i++)  rt[i]= inv?complex_exp(-i, size):complex_exp(i, size);
-	        for(int k=0; k<n; k+=size)  {
-	            for(int i=0; i<size/2; i++) {
-	                complex q= temp[k+size/2+i]*rt[i];
-	                temp[k+size/2+i]= temp[k+i]-q;
-	                temp[k+i]+=q;
-	            }
-	        }
-	    }
+        complex (*ce)(int, int) = tbb::complex::complex_exp;
+        for(int i = 0, size = 1; i < factor_length; ++i)   {
+            int scale = factor_list[i], new_size = size * scale;
+            for(int j = 0; j < new_size; ++j)   rt[j] = inv ? ce(-j, new_size) : ce(j, new_size);
+            for(int u = 0; u < scale; ++u)  for(int v = 0; v < scale; ++v)
+                rt_mat[u][v] = inv ? ce(-u * v, scale) : ce(u * v, scale);
+            for(int k = 0; k < n; k += new_size)    {
+                for(int j = 0; j < size; ++j)   {
+                    static complex rot[10];
+                    for(int t = 0; t < scale; ++t)  rot[t] = temp[k + j + t * size] * rt[(j * t)%new_size];
+                    for(int t = 0; t < scale; ++t)  {
+                        temp[k + j + t * size] = 0;
+                        for(int ti = 0; ti < scale; ++ti)
+                            temp[k + j + t * size] += rt_mat[t][ti] * rot[ti];
+                    }
+                }
+            }
+            size = new_size;
+        }
+
 	    if(inv) for(register int i=0; i<n; i++)   temp[i]= temp[i]/n;
 	    for(register int i=0; i<n; i++)   a[i]= temp[i];
 	}
 	void circ_conv(const double* A, const double* B, double* C, int n)   {
+		const int vol = base_vol;
 	    if(n<=1024) {
 	        for(register int t=0; t<n; ++t)    {
                 double *c= C+t;	*c= 0;
@@ -170,9 +192,6 @@ namespace tbb	{
 	        return ;
 	    }
 	    typedef complex cmxd;
-	    int log= 0;
-	    {int ans;   for(ans= 1; ans<n; log++, ans<<=1)  if(ans>n)   return ;}
-	    if(!tbb::pre_init)   init_root(), tbb::pre_init= true;
 		static int last_n;
 		static double A_0[vol], B_0[vol];
 		static cmxd P[vol/2], Q[vol/2];
@@ -200,7 +219,7 @@ namespace tbb	{
 		}
 
 	    for(register int i=0; i<n/2; i++)   {
-	        c_0[i]= a_0[i]* b_0[i]+ a_1[i]* b_1[i]* root_cplx[2*vol/n*i];
+	        c_0[i]= a_0[i]* b_0[i]+ a_1[i]* b_1[i]* complex::complex_exp(2 * i, n);
 	        c_1[i]= a_0[i]* b_1[i]+ a_1[i]* b_0[i];
 	    }
 	    for(register int i=0; i<n/2; i++)   P[i]= c_0[i]+ c_1[i].right();
@@ -309,7 +328,7 @@ namespace tbb	{
 			this->sho();
 		}
 	//undo function
-		virtual ~LInt() {if(num!=0)	delete[] num;}
+		virtual ~LInt() {delete[] num;}
 	//assignment operator
 		LInt & operator=(const LInt &B)	{
 			sign=B.sign;	d=B.d;
@@ -426,6 +445,7 @@ namespace tbb	{
 			string ans;
 			if(sign==-1)	ans+='-';
 			ans+=i2s(num[d-1]);
+			ans.reserve(ans.size() + 4 * d);
 			for(int i=d-2; i>=0; i--)	{
 				if(num[i]<10)	ans+='0';
 				if(num[i]<100)	ans+='0';
@@ -636,7 +656,7 @@ namespace tbb	{
 			if(A.zero()||B.zero())	return 0;
 			LInt ans;
 			register int x,y;
-			int N=1<<(Log_2(A.d+B.d-1));
+			int N= _conv_length(A.d + B.d - 1);
 			ans.d=N+2;	ans.num= new u32[ans.d]();
 			ans.sign=A.sign*B.sign;
 			static double a[vol], b[vol], c[vol];
@@ -886,8 +906,7 @@ namespace tbb	{
 			char sign= is.peek();
 			if(sign=='-'||sign=='+')	is.get();
 			else	sign= '0';
-			// NaN or inf?	//No. Like the input of float, refuse NaN
-			//just no any suitable input?
+			// standard input for integer does not accept NaN and Inf
 			if(!isdigit(is.peek()))	{
 				if(sign=='+'||sign=='-')	is.unget();
 				A= 0;	is.setstate(std::ios_base::failbit);
@@ -911,14 +930,15 @@ namespace tbb	{
 		}
 
 		// about move semantics
-		LInt(LInt &&rvalue):sign(rvalue.sign), d(rvalue.d), num(rvalue.num) {
+		LInt(LInt &&rvalue) noexcept :sign(rvalue.sign), d(rvalue.d), num(rvalue.num) {
 			rvalue.num= nullptr;
 		}
-		LInt& operator=(LInt &&rhs)	{
+		LInt& operator=(LInt &&rhs) noexcept	{
+			using std::swap;
 			if(this != &rhs)	{
-				std::swap(sign, rhs.sign);
-				std::swap(d, rhs.d);
-				std::swap(num, rhs.num);
+				swap(sign, rhs.sign);
+				swap(d, rhs.d);
+				swap(num, rhs.num);
 			}
 			return *this;
 		}
