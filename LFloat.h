@@ -1,4 +1,4 @@
-#ifndef TBBLFLT_H // LFloat.h ver 3.4
+#ifndef TBBLFLT_H // LFloat.h ver 3.4.1
 #define TBBLFLT_H
 
 #ifdef TBBLINT_H
@@ -64,6 +64,9 @@ namespace tbb   {
 		static int precision();
 		static int precision(int);
 	};
+	const LFloat _LFloat_nan;
+
+	LFloat Div_LInt(LInt, LInt);
 }
 std::ostream & operator<<(std::ostream &, const tbb::LFloat &);
 std::istream & operator>>(std::istream &, tbb::LFloat &);
@@ -438,6 +441,10 @@ std::istream & operator>>(std::istream & is, tbb::LFloat & A)	{
 	}
 	A= tbb::LFloat(init_str);
 	return is;
+}
+
+tbb::LFloat tbb::Div_LInt(LInt numerator, LInt denominator)	{
+	return LFloat(numerator)/LFloat(denominator);
 }
 
 int tbb::LFloat::precision()    {

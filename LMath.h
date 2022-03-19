@@ -1,4 +1,6 @@
-#ifndef TBBLMAT_H //LMath.h ver:3.4.1
+#define debug
+
+#ifndef TBBLMAT_H //LMath.h ver:3.5
 #define TBBLMAT_H
 
 #ifdef debug
@@ -193,6 +195,11 @@ namespace tbb{
     //Declare
     template<>  LFloat mul_pow10    (const LFloat &, int);
     template<>  LFloat pow10        (int);
+    LFloat agm_pi       (void);
+    LFloat _sin         (const LFloat &, int);
+    LFloat _cos         (const LFloat &, int);
+    LFloat _tan         (const LFloat &, int);
+    LFloat _pi          (void);
     LFloat pow_pow10    (const LFloat &, int);
     LFloat abs          (const LFloat &);
     LFloat sqrt         (const LFloat &);
@@ -204,6 +211,8 @@ namespace tbb{
     LFloat sin          (const LFloat &);
     LFloat cos          (const LFloat &);
     LFloat tan          (const LFloat &);
+    LFloat trunc        (const LFloat &);
+    LFloat mod          (const LFloat &, const LFloat &);
 
     //Defination
     LFloat abs(const LFloat & A)    {
@@ -234,6 +243,9 @@ namespace tbb{
         return ans;
     }
 
+    //
+
+    // Exponential & logarithm functions
     template<>
     LFloat mul_pow10(const LFloat & x, int m)   {
         if(x.abnormal())    return x;
@@ -292,6 +304,113 @@ namespace tbb{
         S.sho();
         return S;
     }
+
+    // Triangle functions
+    LFloat agm_pi(void)	{
+    	int precision= tbb::LFloat::precision() * 4;
+    	tbb::LFloat::precision(std::ceil((precision+Log_2(precision))/4.0));
+    	LFloat a= 1, b= 1/sqrt(LFloat(2));
+    	int n= Log_2(precision);
+    	LFloat S= pow(b-a, 2);
+    	for(int i=1; i<=n; ++i)	{
+    		LFloat an= (a+b)/2, bn= sqrt(a*b);
+    		S+= (1<<i)*pow(bn-an, 2);
+    		a= an, b= bn;
+    	}
+    	LFloat ans= (4*a*a)/(1-S);
+    	tbb::LFloat::precision(precision/4);
+    	ans.sho();
+    	return ans;
+    }
+    LFloat _pi(void)    {
+        static LFloat inner_pi= 3;
+        static int pi_precsion= 0;
+        if(_LFloat_prec < pi_precsion)  {
+            LFloat ret = inner_pi;
+            ret.sho();
+            return ret;
+        }
+        pi_precsion= _LFloat_prec;
+        return inner_pi= agm_pi();
+    }
+    LFloat _sin(const LFloat& x, int k) {
+        if(k<=0)    return _LFloat_nan;
+        if(k%2==0)  --k;
+        LFloat S= 1, x2= x * x;
+        for(; k>1; k-= 2)   S = 1 - x2*S/k/(k-1);
+        return x * S;
+    }
+    LFloat _cos(const LFloat& x, int k) {
+        if(k<0) return _LFloat_nan;
+        if(k%2==1)  --k;
+        LFloat C= 1, x2= x * x;
+        for(; k>0; k-=2)    C = 1 - x2*C/k/(k-1);
+        return C;
+    }
+    LFloat _tan(const LFloat& x, int k) {
+        if(k<=0)    return _LFloat_nan;
+        LFloat S= 1, C= 1, x2= x * x;
+        for(; k>1; --k)
+            if(k%2) S= 1 - x2*S/k/(k-1);
+            else    C= 1 - x2*C/k/(k-1);
+        S *= x;
+        return S / C;
+    }
+    LFloat sin(const LFloat& x) {
+        if(x.meanless())    return _LFloat_nan;
+        if(x==0)    return 0;
+        if(x<0)     return -sin(-x);
+        if(x >= 0.785398163397)    { // if needed
+            if(x >= 2 * _pi())  return sin(mod(x, 2*_pi()));
+            if(x >= _pi())      return -sin(x - _pi());
+            if(x >= _pi()/2)    return sin(_pi() - x);
+            if(x >= _pi()/4)    return cos(_pi()/2 - x);
+        }
+        struct{
+            LFloat operator()(const LFloat& t) {return 3*t - 4*pow(t,3);}
+        } scale_func;
+        int precision = _LFloat_prec * 4;
+        int n = std::ceil(6.496501949786595*std::log(precision) + 0.00384285132051876*precision);
+        int k = std::ceil(-0.630929753571457 + 0.523975818572346*precision/n - 0.455119613313419*std::log(n));
+        _LFloat_prec= (precision + Log_2(precision) + Log_2(k))/4 + 1;
+        LFloat x0= x;
+        for(int i=0; i<k; ++i)  x0/= 3;
+        LFloat y0= _sin(x0, 4*n);
+        for(int i=0; i<k; ++i)  y0= scale_func(y0);
+        _LFloat_prec= precision / 4;
+        y0.sho();
+        return y0;
+    }
+    LFloat cos(const LFloat& x) {
+        if(x.meanless())    return _LFloat_nan;
+        if(x==0)    return 1;
+        if(x<0)     return cos(-x);
+        if(x >= 0.785398163397) { // if needed
+            if(x >= 2 * _pi())  return cos(mod(x, 2*_pi()));
+            if(x >= _pi())      return cos(2*_pi() - x);
+            if(x >= _pi()/2)    return -cos(_pi() - x);
+            if(x >= _pi()/4)    return sin(_pi()/2 - x);
+        }
+        struct{
+            LFloat operator()(const LFloat& t) {return 2*t*t - 1;}
+        } scale_func;
+        int precision = _LFloat_prec * 4;
+        double t= std::sqrt(precision) * 1.28878394133527;
+        int k= std::ceil(t)+ 1, n= std::ceil(t/2)+ 1;
+        _LFloat_prec= (precision + Log_2(precision) + Log_2(k))/4 + 12;
+        LFloat x0= x;
+        for(int i=0; i<k; ++i)  x0/= 2;
+        LFloat y0= _cos(x0, 4*n);
+        for(int i=0; i<k; ++i)  y0= scale_func(y0);
+        _LFloat_prec= precision / 4;
+        y0.sho();
+        return y0;
+    }
+    LFloat tan(const LFloat& x) {
+        if(x.meanless())    return _LFloat_nan;
+        if(x==0)    return 0;
+        return sin(x) / cos(x);
+    }
     LFloat arctan(const LFloat& x)  {
         if(x.isNaN()||x.zero())   return x;
         if(x.isinf() && x.negative())   return arctan(-1)*2;
@@ -308,7 +427,7 @@ namespace tbb{
         int n= precision/bound +1;  //expansion terms count
         int k= 0;   //scale times
 
-        _LFloat_prec= (precision + Log_2(precision) + Log_2(k))/4 + 1;
+        _LFloat_prec= (precision + Log_2(precision) + 3.322*bound)/4 + 1;
         LFloat x_scaled= x;
         x_scaled.sho();
         while(x_scaled > B) {   //scaling
@@ -323,6 +442,49 @@ namespace tbb{
         _LFloat_prec= precision/4;
         y.sho();
         return y;
+    }
+    LFloat arctan2(const LFloat& x)  {
+    	if(x.isNaN()||x.zero())   return x;
+    	if(x.isinf() && x.negative())   return arctan(-1)*2;
+    	if(x.isinf() && x.positive())   return arctan(1)*2;
+    	if(x<0) return -arctan(-x);
+    	if(x>1) return arctan((sqrt(x*x+1)-1)/x)*2;
+
+    	struct{
+    		LFloat operator()(const LFloat& t) {return t / (sqrt(t*t+1)+1);}
+    	} scale_func;
+    	int precision= _LFloat_prec * 4;
+    	int n= std::ceil(std::sqrt(precision/2)*12) + 1;
+    	int bound= std::ceil(1.0*precision/2/n) + 1;  //expansion terms count
+    	LFloat B= pow10<LFloat>(-bound);
+    	int k= 0;   //scale times
+
+    	_LFloat_prec= (precision + Log_2(precision) + 3.322*bound)/4 + 1;
+    	LFloat x_scaled= x;
+    	x_scaled.sho();
+    	while(x_scaled > B) {   //scaling
+    		x_scaled= scale_func(x_scaled);
+    		++k;
+    	}
+    	LFloat z= 1 / (1 + x_scaled * x_scaled);
+    	LFloat y_scaled= 1, t= 1-z;
+    	for(int i= n; i>= 1; --i)	y_scaled= y_scaled*t*2*i/(2*i+1) + 1;
+    	y_scaled*= x_scaled * z;
+    	LFloat& y= y_scaled;
+    	for(int i= 0; i<k; ++i) y= y*2;
+    	_LFloat_prec= precision/4;
+    	y.sho();
+    	return y;
+    }
+
+    // translate to LInt
+    LFloat trunc(const LFloat &x)   {
+        if(x.abnormal())    return x;
+        if(x.pow>=0)    return x;
+        return x.base >> x.pow;
+    }
+    LFloat mod(const LFloat &x, const LFloat &y)    {
+        return x - trunc(x/y) * y;
     }
 }
 #endif //TBBLFLT_H

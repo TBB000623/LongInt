@@ -945,6 +945,8 @@ namespace tbb	{
 	#endif
 	};
 
+	const LInt _LInt_nan;
+
 	template <typename T= LInt>
 	T mul_pow10(const T &, int);
 
