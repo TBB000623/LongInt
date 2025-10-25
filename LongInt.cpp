@@ -11,13 +11,13 @@
 #define EL	putchar('\n')
 // #include "LFloat.h"
 #include "LInt.h"
-#include "LMath.h"
+#include "LMath.h" 
 #include "LFloat.h"
 using namespace tbb;
 using namespace std;
 
-int main()	{
-#include "localtest.h"
+int main()	{ 
+	cout << "LongInt and LongFloat Test Program\n";
 	
 	return 0;
 }

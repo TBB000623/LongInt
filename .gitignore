@@ -1,0 +1,38 @@
+# 编译生成的文件
+*.exe
+*.o
+*.obj
+*.out
+*.dll
+*.so
+*.dylib
+
+# 调试文件
+*.pdb
+*.idb
+*.ilk
+*.db
+
+# 项目文件
+*.vcxproj
+*.vcxproj.filters
+*.sln
+*.project
+*.cbp
+
+# IDE文件
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 其他临时文件
+*.tmp
+*.temp
+build/
+Debug/
+Release/
