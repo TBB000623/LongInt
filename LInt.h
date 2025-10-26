@@ -534,7 +534,7 @@ struct LInt {
 			if (d < 100)
 				for (int k = 0; k < d; k++) cout << num[k] << (k % 8 == 7 ? '\n' : '\t');
 			else {
-				int t = int(sqrt(d));
+				int t = int(std::sqrt(d));
 				for (int k = 0; k < t; k++) cout << num[k] << (k % 8 == 7 ? '\n' : '\t');
 				cout << "...\n";
 				for (int k = 0; k < t; k++) cout << num[d - t + k] << (k % 8 == 7 ? '\n' : '\t');
