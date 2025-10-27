@@ -52,12 +52,9 @@ void Fast_out(u32 a) {
 	} else putchar('0' + a);
 }
 inline void Fast_0_out(u32 a, int len = 4) {
-	if (len >= 2)
-		if (a < 10) putchar('0');
-	if (len >= 3)
-		if (a < 100) putchar('0');
-	if (len >= 4)
-		if (a < 1000) putchar('0');
+	if (len >= 2 && a < 10) putchar('0');
+	if (len >= 3 && a < 100) putchar('0');
+	if (len >= 4 && a < 1000) putchar('0');
 	Fast_out(a);
 }
 inline const char* Fast_0_out_char(u32 a, char* dest = 0, int len = 4) {
@@ -1098,18 +1095,10 @@ LInt mul_pow10(const LInt& A, int k) {
 	res = (k % 4 + 4) % 4;
 	divi = (k - res) / 4;
 	switch (res) {
-		case (0):
-			t1 = 1;
-			break;
-		case (1):
-			t1 = 10;
-			break;
-		case (2):
-			t1 = 100;
-			break;
-		default:
-			t1 = 1000;
-			break;
+		case (0): t1 = 1; break;
+		case (1): t1 = 10; break;
+		case (2): t1 = 100; break;
+		default:  t1 = 1000; break;
 	}
 	return (divi >= 0) ? ((A * t1) << divi) : ((A * t1) >> -divi);
 }
