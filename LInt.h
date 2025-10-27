@@ -8,6 +8,7 @@
 #include <cstring>
 #include <iostream>  //version:3.5
 #include <string>
+#include <vector>
 typedef unsigned long long u64;
 typedef long long i64;
 typedef int i32;
@@ -247,134 +248,119 @@ struct LInt {
 	// elements
 	short sign;
 	int d;
-	u32* num;
+	std::vector<u32> num;
 	// define function/ initial
-	LInt(void) : sign(0), d(0), num(0) {}
-	LInt(bool b, int code = 0) : sign(0), d(0) {
-		if (b) {
-			num = new u32[0];
-		} else {
-			num = 0;
+	LInt(void) : sign(0), d(0), num() {}
+	LInt(bool b, int code = 0) : sign(0), d(0), num(1, 0) {
+		if (b == false) {
 			if (code > 0) sign = 2;
 			if (code < 0) sign = -2;
 		}
 	}
-	LInt(int b) {
+	LInt(int b) : sign(0), num(1, 0) {
+		i64 tb = b;
 		if (b == 0) {
-			sign = d = 0;
-			num = new u32[0];
-		} else if (b < 0) {
-			b = -b;
-			sign = -1;
-		} else sign = 1;
+			d = 0;
+			return;
+		}
+		if (b > 0) sign = 1;
+		if (b < 0) sign = -1, tb = -tb;
+
+		if (tb > 99999999) d = 3;
+		else if (tb > 9999) d = 2;
+		else d = 1;
+		num.resize(d, 0);
+		for (int i = 0; i < d && tb > 0; i++) {
+			num[i] = b % 10000;
+			b /= 10000;
+		}
+	}
+	LInt(i64 b) : sign(0), num(1, 0) {
+		u64 ub;
+		if (b == 0) {
+			d = 0;
+			return;
+		}
+		if (b < 0) sign = -1, ub = static_cast<u64>(-(b + 1)) + 1ull;
+		if (b > 0) sign = 1, ub = static_cast<u64>(b);
 		if (sign != 0) {
-			if (b > 99999999) d = 3;
-			else if (b > 9999) d = 2;
+			if (ub > 9999999999999999ull) d = 5;
+			else if (ub > 999999999999ull) d = 4;
+			else if (ub > 99999999) d = 3;
+			else if (ub > 9999) d = 2;
 			else d = 1;
-			num = new u32[d];
+			num.resize(d);
 			for (int i = 0; i < d && b > 0; i++) {
-				num[i] = b % 10000;
-				b /= 10000;
+				num[i] = ub % 10000;
+				ub /= 10000;
 			}
 		}
 	}
-	LInt(i64 b) {
+	LInt(u64 b) : num(1, 0) {
 		if (b == 0) {
 			sign = d = 0;
-			num = new u32[0];
-		} else if (b < 0) {
-			b = -b;
-			sign = -1;
-		} else sign = 1;
-		if (sign != 0) {
-			if (b > 9999999999999999LL) d = 5;
-			else if (b > 999999999999LL) d = 4;
-			else if (b > 99999999) d = 3;
-			else if (b > 9999) d = 2;
-			else d = 1;
-			num = new u32[d];
-			for (int i = 0; i < d && b > 0; i++) {
-				num[i] = b % 10000;
-				b /= 10000;
-			}
-		}
-	}
-	LInt(u64 b) {
-		if (b == 0) {
-			sign = d = 0;
-			num = new u32[0];
 		} else {
 			sign = 1;
-			if (b > 9999999999999999LL) d = 5;
-			else if (b > 999999999999LL) d = 4;
+			if (b > 9999999999999999ull) d = 5;
+			else if (b > 999999999999ull) d = 4;
 			else if (b > 99999999) d = 3;
 			else if (b > 9999) d = 2;
 			else d = 1;
-			num = new u32[d];
+			num.resize(d);
 			for (int i = 0; i < d && b > 0; i++) {
 				num[i] = b % 10000;
 				b /= 10000;
 			}
 		}
 	}
-	LInt(const char* inString) {
+	LInt(const char* in_string) {
 		int i, len;
 		bool flag = true, minus = false;
-		if (inString[0] == '-') {
+		if (in_string[0] == '-') {
 			minus = true;
-			inString++;
-		} else if (inString[0] == '+') {
+			in_string++;
+		} else if (in_string[0] == '+') {
 			minus = false;
-			inString++;
+			in_string++;
 		}
-		len = strlen(inString);
+		len = strlen(in_string);
 		// check string is +/- inf whether or not
-		if (strcmp(inString, "inf") == 0) {
+		if (strcmp(in_string, "inf") == 0) {
 			sign = minus ? -2 : 2;
 			d = 0;
-			num = 0;
+			num.resize(0);
 			return;
 		}
 		// check string is full of numbers or not
-		for (i = 0; i < len && flag; i++) flag = flag && ('0' <= inString[i] && inString[i] <= '9');
+		for (i = 0; i < len && flag; i++) flag = flag && ('0' <= in_string[i] && in_string[i] <= '9');
 		if (!flag || len == 0) {
 			d = sign = 0;
-			num = 0;
+			num.clear();
 			return;
 		}
 		// ignore all 0 at the begin of string
-		for (; *inString == '0'; inString++, len--);
-		if (*inString == '\0') {
+		for (; *in_string == '0'; in_string++, len--);
+		if (*in_string == '\0') {
 			d = sign = 0;
-			num = new u32[0];
+			num.resize(1, 0);
 			return;
 		}
 		// string is a normal number
 		d = (len + 3) / 4;
-		num = new u32[d]();
+		num.resize(d, 0);
 		sign = minus ? -1 : 1;
 		int j, temp;
 		for (temp = 0, i = len, j = 0; j < len; j++) {
-			temp = temp * 10 + inString[j] - '0';
+			temp = temp * 10 + in_string[j] - '0';
 			i -= 1;
 			if (i % 4 == 0) num[i / 4] = temp, temp = 0;
 		}
 	}
 	LInt(const string& inString_) : num(0) { *this = inString_.c_str(); }
-	LInt(const LInt& A) : sign(A.sign), d(A.d) {
-		num = new u32[d];
-		for (int i = 0; i < d; i++) num[i] = A.num[i];
-	}
-	LInt(const u32* inNum, int k) : sign(1) {
-		while (k > 0 && inNum[k - 1] == 0) k--, inNum++;
-		d = k;
-		num = new u32[k];
-		memset(num, 0, k * sizeof(u32));
-		for (int i = 0; i < k; i++) num[i] = inNum[i];
-		this->sho();
-	}
+	LInt(const LInt& A) : sign(A.sign), d(A.d), num(A.num.begin(), A.num.end()) {}
+	LInt(const u32* in_num, int k) : sign(1), d(k), num(in_num, in_num + k) { this->sho(); }
 	// undo function
-	virtual ~LInt() { delete[] num; }
+	virtual ~LInt() {}
 	// assignment operator
 	LInt& operator=(const LInt& B) {
 		sign = B.sign;
