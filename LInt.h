@@ -162,8 +162,7 @@ void DFT(const complex* A, complex* a, int n, bool inv = false) {
 			int scale = factor_list[i];
 			for (int k = 0; k < rev_length; ++k) rev[k] *= scale;
 			for (int j = 1; j < scale; ++j)
-				for (int k = 0; k < rev_length; ++k)
-					rev[j * rev_length + k] = j + rev[k];
+				for (int k = 0; k < rev_length; ++k) rev[j * rev_length + k] = j + rev[k];
 			rev_length *= scale;
 		}
 		last_n = n;
@@ -175,16 +174,14 @@ void DFT(const complex* A, complex* a, int n, bool inv = false) {
 		int scale = factor_list[i], new_size = size * scale;
 		for (int j = 0; j < new_size; ++j) rt[j] = inv ? ce(-j, new_size) : ce(j, new_size);
 		for (int u = 0; u < scale; ++u)
-			for (int v = 0; v < scale; ++v)
-				rt_mat[u][v] = inv ? ce(-u * v, scale) : ce(u * v, scale);
+			for (int v = 0; v < scale; ++v) rt_mat[u][v] = inv ? ce(-u * v, scale) : ce(u * v, scale);
 		for (int k = 0; k < n; k += new_size) {
 			for (int j = 0; j < size; ++j) {
 				static complex rot[10];
 				for (int t = 0; t < scale; ++t) rot[t] = temp[k + j + t * size] * rt[(j * t) % new_size];
 				for (int t = 0; t < scale; ++t) {
 					temp[k + j + t * size] = 0;
-					for (int ti = 0; ti < scale; ++ti)
-						temp[k + j + t * size] += rt_mat[t][ti] * rot[ti];
+					for (int ti = 0; ti < scale; ++ti) temp[k + j + t * size] += rt_mat[t][ti] * rot[ti];
 				}
 			}
 		}
@@ -201,8 +198,7 @@ void circ_conv(const double* A, const double* B, double* C, int n) {
 		for (register int t = 0; t < n; ++t) {
 			double* c = C + t;
 			*c = 0;
-			for (const double *a = A + t, *b = B; b < B + n; ++b, (a == A) ? (a = A + n - 1) : (--a))
-				*c += *a * *b;
+			for (const double *a = A + t, *b = B; b < B + n; ++b, (a == A) ? (a = A + n - 1) : (--a)) *c += *a * *b;
 		}
 		return;
 	}
@@ -364,9 +360,7 @@ struct LInt {
 			if (i % 4 == 0) num[i / 4] = temp, temp = 0;
 		}
 	}
-	LInt(const string& inString_) : num(0) {
-		*this = inString_.c_str();
-	}
+	LInt(const string& inString_) : num(0) { *this = inString_.c_str(); }
 	LInt(const LInt& A) : sign(A.sign), d(A.d) {
 		num = new u32[d];
 		for (int i = 0; i < d; i++) num[i] = A.num[i];
@@ -618,9 +612,7 @@ struct LInt {
 		ans.sho();
 		return ans;
 	}
-	LInt pow2() const {
-		return (*this) * (*this);
-	}
+	LInt pow2() const { return (*this) * (*this); }
 	// Operator Function
 	const LInt operator<<(int k) const {
 		if (abnormal()) return *this;
@@ -709,9 +701,7 @@ struct LInt {
 			return B + (*this);
 		}
 	}
-	const LInt operator-(const LInt& B) const {
-		return *this + (-B);
-	}
+	const LInt operator-(const LInt& B) const { return *this + (-B); }
 	const LInt operator*(int B) const {
 		const LInt& A = *this;
 		if (A.isNaN()) return false;
@@ -721,8 +711,7 @@ struct LInt {
 		if (B == 1 || B == -1) return B == 1 ? A : -A;
 		LInt ans;
 		ans.num = new u32[A.d + 3]();
-		ans.sign = A.sign * (B < 0 ? -1 : (B > 0) ? 1
-		                                          : 0);
+		ans.sign = A.sign * (B < 0 ? -1 : (B > 0) ? 1 : 0);
 		if (B < 0) B = -B;
 		u64 temp = 0, carry = 0;
 		for (int i = 0; i < A.d; i++) {
@@ -957,17 +946,13 @@ struct LInt {
 		sign = temp.sign;
 		return *this;
 	}
-	inline LInt& operator++(void) {
-		return *this += 1;
-	}
+	inline LInt& operator++(void) { return *this += 1; }
 	inline const LInt operator++(int) {
 		LInt b = *this;
 		*this += 1;
 		return b;
 	}
-	inline LInt& operator--(void) {
-		return *this -= 1;
-	}
+	inline LInt& operator--(void) { return *this -= 1; }
 	inline const LInt operator--(int) {
 		LInt b = *this;
 		*this -= 1;
@@ -983,15 +968,9 @@ struct LInt {
 		 */
 	}
 	// Friend Function for Other Classical Class
-	friend LInt operator+(int A, const LInt& B) {
-		return B + LInt(A);
-	}
-	friend LInt operator-(int A, const LInt& B) {
-		return -B + LInt(A);
-	}
-	friend LInt operator*(int A, const LInt& B) {
-		return B * A;
-	}
+	friend LInt operator+(int A, const LInt& B) { return B + LInt(A); }
+	friend LInt operator-(int A, const LInt& B) { return -B + LInt(A); }
+	friend LInt operator*(int A, const LInt& B) { return B * A; }
 	friend std::ostream& operator<<(std::ostream& os, const LInt& A) {
 		if (A.sign == 0) {
 			if (A.num == 0) os.write("NaN", 3);
@@ -1053,9 +1032,7 @@ struct LInt {
 	}
 #if __cplusplus >= 201103L
 	// converse to other classical type
-	explicit operator bool() const {
-		return isinf() || isNaN();
-	}
+	explicit operator bool() const { return isinf() || isNaN(); }
 	explicit operator int() const {
 		int temp = 0;
 		for (int i = 0; i < d; i++) temp = temp * 10000 + num[i];
@@ -1064,9 +1041,7 @@ struct LInt {
 	}
 
 	// about move semantics
-	LInt(LInt&& rvalue) noexcept : sign(rvalue.sign), d(rvalue.d), num(rvalue.num) {
-		rvalue.num = nullptr;
-	}
+	LInt(LInt&& rvalue) noexcept : sign(rvalue.sign), d(rvalue.d), num(rvalue.num) { rvalue.num = nullptr; }
 	LInt& operator=(LInt&& rhs) noexcept {
 		using std::swap;
 		if (this != &rhs) {
@@ -1105,7 +1080,9 @@ LInt mul_pow10(const LInt& A, int k) {
 LInt mul_pow10(const int& a, int k) { return mul_pow10(LInt(a), k); }
 
 template <>
-LInt pow10(int k) { return mul_pow10(1, k); }
+LInt pow10(int k) {
+	return mul_pow10(1, k);
+}
 }  // namespace tbb
 
 #endif

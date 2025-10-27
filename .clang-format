@@ -1,13 +1,12 @@
-NamespaceIndentation: Inner
-ShortNamespaceLines: 0
 BasedOnStyle: Google
 UseTab: ForIndentation
 TabWidth: 4
 IndentWidth: 4
 BreakBeforeBraces: Attach
-ColumnLimit: 0
+ColumnLimit: 200
 AllowShortIfStatementsOnASingleLine: AllIfsAndElse
 AllowShortCaseLabelsOnASingleLine: true
+BreakBeforeTernaryOperators: false
 AlignConsecutiveShortCaseStatements:
     Enabled: true
     AcrossEmptyLines: true
