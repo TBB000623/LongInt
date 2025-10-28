@@ -357,6 +357,10 @@ struct LInt {
 		}
 	}
 	LInt(const u32* in_num, int k) : sign(1), d(k), num(in_num, in_num + k) { this->sho(); }
+	template <typename It>
+	LInt(It begin_iter, It end_iter) : sign(1), d(std::distance(begin_iter, end_iter)), num(begin_iter, end_iter) {
+		this->sho();
+	}
 #if __cplusplus >= 201103L
 	LInt(const LInt&) = default;
 	LInt(LInt&&) noexcept = default;
@@ -562,10 +566,10 @@ struct LInt {
 			return LInt(div / a);
 		}
 		int k = (A.d + 2) / 2;
-		LInt Ak(A.num + (A.d - k), k), _Ak, _A, _rA;
-		_Ak = Ak.recip();
-		_A = ((2 * _Ak) << (A.d - k)) - ((A * _Ak * _Ak) >> (2 * k));
-		_rA = (LInt(1) << (2 * A.d)) - _A * A;
+		LInt Ak(A.num.end(), std::prev(A.num.end(), k));
+		LInt _Ak = Ak.recip();
+		LInt _A = ((2 * _Ak) << (A.d - k)) - ((A * _Ak * _Ak) >> (2 * k));
+		LInt _rA = (LInt(1) << (2 * A.d)) - _A * A;
 		for (int delta = 0x08000000; delta > 0; delta /= 2) {
 			LInt temp = delta * A;
 			if (_rA < 0) {
@@ -598,23 +602,20 @@ struct LInt {
 		if (k < 0) return LInt(false);
 		if (*this == 0) return LInt(0);
 		LInt ans(false);
-		u32* _num = new u32[d + k]();
-		for (int i = 0; i < d; i++) _num[i + k] = num[i];
-		ans.num = _num;
 		ans.d = d + k;
 		ans.sign = sign;
+		ans.num.assign(d + k, 0);
+		std::copy(num.begin(), num.end(), ans.num.begin() + k);
 		return ans;
 	}
 	const LInt operator>>(int k) const {
 		if (abnormal()) return *this;
 		if (k < 0) return LInt(false);
 		if (d <= k) return LInt(0);
-		LInt ans(false);
-		u32* _num = new u32[d - k];
-		for (int i = 0; i < d - k; i++) _num[i] = num[i + k];
-		ans.num = _num;
-		ans.d = d - k;
+		LInt ans;
 		ans.sign = sign;
+		ans.d = d - k;
+		ans.num.assign(num.begin() + k, num.end());
 		return ans;
 	}
 	const LInt operator-() const {
