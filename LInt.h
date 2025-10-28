@@ -7,7 +7,9 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>  //version:3.5
+#include <iterator>
 #include <string>
+#include <vector>
 typedef unsigned long long u64;
 typedef long long i64;
 typedef int i32;
@@ -231,159 +233,154 @@ struct LInt {
 	// elements
 	short sign;
 	int d;
-	u32* num;
+	std::vector<u32> num;
 	// define function/ initial
-	LInt(void) : sign(0), d(0), num(0) {}
-	LInt(bool b, int code = 0) : sign(0), d(0) {
-		if (b) {
-			num = new u32[0];
-		} else {
-			num = 0;
+	LInt(void) : sign(0), d(0), num() {}
+	LInt(bool b, int code = 0) : sign(0), d(0), num(1, 0) {
+		if (b == false) {
 			if (code > 0) sign = 2;
 			if (code < 0) sign = -2;
 		}
 	}
-	LInt(int b) {
+	LInt(int b) : sign(0), num(1, 0) {
+		i64 tb = b;
 		if (b == 0) {
-			sign = d = 0;
-			num = new u32[0];
-		} else if (b < 0) {
-			b = -b;
-			sign = -1;
-		} else sign = 1;
+			d = 0;
+			return;
+		}
+		if (b > 0) sign = 1;
+		if (b < 0) sign = -1, tb = -tb;
+
+		if (tb > 99999999) d = 3;
+		else if (tb > 9999) d = 2;
+		else d = 1;
+		num.resize(d, 0);
+		for (int i = 0; i < d && tb > 0; i++) {
+			num[i] = b % 10000;
+			b /= 10000;
+		}
+	}
+	LInt(i64 b) : sign(0), num(1, 0) {
+		u64 ub;
+		if (b == 0) {
+			d = 0;
+			return;
+		}
+		if (b < 0) sign = -1, ub = static_cast<u64>(-(b + 1)) + 1ull;
+		if (b > 0) sign = 1, ub = static_cast<u64>(b);
 		if (sign != 0) {
-			if (b > 99999999) d = 3;
-			else if (b > 9999) d = 2;
+			if (ub > 9999999999999999ull) d = 5;
+			else if (ub > 999999999999ull) d = 4;
+			else if (ub > 99999999) d = 3;
+			else if (ub > 9999) d = 2;
 			else d = 1;
-			num = new u32[d];
+			num.resize(d);
 			for (int i = 0; i < d && b > 0; i++) {
-				num[i] = b % 10000;
-				b /= 10000;
+				num[i] = ub % 10000;
+				ub /= 10000;
 			}
 		}
 	}
-	LInt(i64 b) {
+	LInt(u64 b) : num(1, 0) {
 		if (b == 0) {
 			sign = d = 0;
-			num = new u32[0];
-		} else if (b < 0) {
-			b = -b;
-			sign = -1;
-		} else sign = 1;
-		if (sign != 0) {
-			if (b > 9999999999999999LL) d = 5;
-			else if (b > 999999999999LL) d = 4;
-			else if (b > 99999999) d = 3;
-			else if (b > 9999) d = 2;
-			else d = 1;
-			num = new u32[d];
-			for (int i = 0; i < d && b > 0; i++) {
-				num[i] = b % 10000;
-				b /= 10000;
-			}
-		}
-	}
-	LInt(u64 b) {
-		if (b == 0) {
-			sign = d = 0;
-			num = new u32[0];
 		} else {
 			sign = 1;
-			if (b > 9999999999999999LL) d = 5;
-			else if (b > 999999999999LL) d = 4;
+			if (b > 9999999999999999ull) d = 5;
+			else if (b > 999999999999ull) d = 4;
 			else if (b > 99999999) d = 3;
 			else if (b > 9999) d = 2;
 			else d = 1;
-			num = new u32[d];
+			num.resize(d);
 			for (int i = 0; i < d && b > 0; i++) {
 				num[i] = b % 10000;
 				b /= 10000;
 			}
 		}
 	}
-	LInt(const char* inString) {
+	LInt(const char* in_string) {
 		int i, len;
 		bool flag = true, minus = false;
-		if (inString[0] == '-') {
+		if (in_string[0] == '-') {
 			minus = true;
-			inString++;
-		} else if (inString[0] == '+') {
+			in_string++;
+		} else if (in_string[0] == '+') {
 			minus = false;
-			inString++;
+			in_string++;
 		}
-		len = strlen(inString);
+		len = strlen(in_string);
 		// check string is +/- inf whether or not
-		if (strcmp(inString, "inf") == 0) {
+		if (strcmp(in_string, "inf") == 0) {
 			sign = minus ? -2 : 2;
 			d = 0;
-			num = 0;
+			num.resize(0);
 			return;
 		}
 		// check string is full of numbers or not
-		for (i = 0; i < len && flag; i++) flag = flag && ('0' <= inString[i] && inString[i] <= '9');
+		for (i = 0; i < len && flag; i++) flag = flag && ('0' <= in_string[i] && in_string[i] <= '9');
 		if (!flag || len == 0) {
 			d = sign = 0;
-			num = 0;
+			num.clear();
 			return;
 		}
 		// ignore all 0 at the begin of string
-		for (; *inString == '0'; inString++, len--);
-		if (*inString == '\0') {
+		for (; *in_string == '0'; in_string++, len--);
+		if (*in_string == '\0') {
 			d = sign = 0;
-			num = new u32[0];
+			num.resize(1, 0);
 			return;
 		}
 		// string is a normal number
 		d = (len + 3) / 4;
-		num = new u32[d]();
+		num.resize(d, 0);
 		sign = minus ? -1 : 1;
 		int j, temp;
 		for (temp = 0, i = len, j = 0; j < len; j++) {
-			temp = temp * 10 + inString[j] - '0';
+			temp = temp * 10 + in_string[j] - '0';
 			i -= 1;
 			if (i % 4 == 0) num[i / 4] = temp, temp = 0;
 		}
 	}
-	LInt(const string& inString_) : num(0) { *this = inString_.c_str(); }
-	LInt(const LInt& A) : sign(A.sign), d(A.d) {
-		num = new u32[d];
-		for (int i = 0; i < d; i++) num[i] = A.num[i];
-	}
-	LInt(const u32* inNum, int k) : sign(1) {
-		while (k > 0 && inNum[k - 1] == 0) k--, inNum++;
-		d = k;
-		num = new u32[k];
-		memset(num, 0, k * sizeof(u32));
-		for (int i = 0; i < k; i++) num[i] = inNum[i];
+	LInt(const u32* in_num, int k) : sign(1), d(k), num(in_num, in_num + k) { this->sho(); }
+	template <typename It>
+	LInt(It begin_iter, It end_iter) : sign(1), d(std::distance(begin_iter, end_iter)), num(begin_iter, end_iter) {
 		this->sho();
 	}
+#if __cplusplus >= 201103L
+	LInt(const LInt&) = default;
+	LInt(LInt&&) noexcept = default;
+	LInt(const string& inString_) : LInt(inString_.c_str()) {}
+#else
+	LInt(const LInt& A) : sign(A.sign), d(A.d), num(A.num) {}
+	LInt(const string& inString_) : num(0) { *this = LInt(inString_.c_str()); }
+#endif
 	// undo function
-	virtual ~LInt() { delete[] num; }
+	virtual ~LInt() {}
 	// assignment operator
+#if __cplusplus >= 201103L
+	LInt& operator=(const LInt&) = default;
+	LInt& operator=(LInt&&) noexcept = default;
+#else
 	LInt& operator=(const LInt& B) {
-		sign = B.sign;
-		d = B.d;
-		if (num != 0) delete[] num;
-		if (B.isNaN()) num = 0;
-		else {
-			num = new u32[d];
-			for (int i = 0; i < d; i++) num[i] = B.num[i];
+		if (this != &B) {
+			sign = B.sign;
+			d = B.d;
+			num = B.num;
 		}
 		return *this;
 	}
 	LInt& operator=(const char* inString) {
 		LInt temp(inString);
-		d = temp.d;
-		sign = temp.sign;
-		if (num != 0) delete[] num;
-		num = temp.num;
-		temp.num = 0;
+		std::swap(sign, temp.sign);
+		std::swap(d, temp.d);
+		std::swap(num, temp.num);
 		return *this;
 	}
 	inline LInt& operator=(bool b) { return *this = LInt(b); }
 	inline LInt& operator=(int i) { return *this = LInt(i); }
 	inline LInt& operator=(i64 i) { return *this = LInt(i); }
 	inline LInt& operator=(u64 u) { return *this = LInt(u); }
+#endif
 	// compare operator
 	bool operator<(const LInt& B) const {
 		const LInt& A = *this;
@@ -438,35 +435,31 @@ struct LInt {
 	}
 	inline LInt abs(const LInt& b) const { return b.abs(); }
 	void sho() {
-		if (sign == 2 || sign == -2) {
+		if (sign == 2 || sign == -2) {  // +inf or -inf
 			d = 0;
-			if (num != 0) {
-				delete[] num;
-				num = 0;
+			num.clear();
+			return;
+		}
+
+		if (sign == 0) {  // zero or NaN
+			d = 0;
+			if (!num.empty()) {
+				num.assign(1, 0);  // normalize zero representation
 			}
 			return;
 		}
-		if (sign == 0) {
-			d = 0;
-			if (num != 0) {
-				delete[] num;
-				num = new u32[0];
-			}
-			return;
-		}
-		int i = this->d - 1;
-		while (i >= 0 && num[i] == 0) i--;
+
+		int i = d - 1;
+		while (i >= 0 && num[i] == 0) --i;
+
 		if (i < 0) {
-			if (num) delete[] num;
-			num = new u32[0];
-			sign = d = 0;
+			sign = 0;
+			d = 0;
+			num.assign(1, 0);
 			return;
 		}
-		this->d = i + 1;
-		u32* pre = this->num;
-		num = new u32[this->d];
-		for (int j = 0; j < this->d; j++) num[j] = pre[j];
-		delete[] pre;
+		d = i + 1;
+		num.resize(d);
 		return;
 	}
 
@@ -508,7 +501,7 @@ struct LInt {
 			return;
 		}
 		if (sign == 0) {
-			if (num == 0) printf("NaN");
+			if (num.empty()) printf("NaN");
 			else putchar('0');
 			return;
 		}
@@ -522,7 +515,7 @@ struct LInt {
 		}
 	}
 	string print_str() const {
-		if (sign == 0) return num == 0 ? string("NaN") : string("0");
+		if (sign == 0) return num.empty() ? string("NaN") : string("0");
 		if (sign == 2 || sign == -2) return sign == -2 ? string("-inf") : string("inf");
 		string ans;
 		if (sign == -1) ans += '-';
@@ -540,8 +533,8 @@ struct LInt {
 		cout << "LInt:\n";
 		cout << "Address: " << this << endl;
 		cout << "Sign: " << (sign > 0 ? '+' : (sign < 0 ? '-' : '0')) << '\t';
-		cout << "List address: " << num << '\t' << "size: " << d << endl;
-		if (d) {
+		cout << "Size: " << d << endl;
+		if (d > 0) {
 			cout << "Detail of the list: \n";
 			if (d < 100)
 				for (int k = 0; k < d; k++) cout << num[k] << (k % 8 == 7 ? '\n' : '\t');
@@ -553,7 +546,7 @@ struct LInt {
 			}
 		} else if (sign > 0) cout << "LInt = +inf\n";
 		else if (sign < 0) cout << "LInt = -inf\n";
-		else if (num != 0) cout << "LInt =0\n";
+		else if (!num.empty()) cout << "LInt = 0\n";
 		else cout << "LInt = NaN\n";
 		cout << "show LInt end.\n";
 	}
@@ -562,26 +555,17 @@ struct LInt {
 		if (zero()) return 0;
 		return strlen(i2s(num[d - 1])) + 4 * (d - 1);
 	}
-	inline bool isNaN() const { return (num == 0) && (d == 0) && (sign == 0); }
+	inline bool isNaN() const { return num.empty() && d == 0 && sign == 0; }
 	inline bool positive() const { return sign > 0; }
 	inline bool negative() const { return sign < 0; }
 	inline bool isinf() const { return sign == 2 || sign == -2; }
-	inline bool zero() const { return sign == 0 && num != 0; }
+	inline bool zero() const { return !num.empty() && sign == 0; }
 	inline bool meanless() const { return isNaN() || isinf(); }
 	inline bool abnormal() const { return zero() || isinf() || isNaN(); }
 	friend void swap(LInt& A, LInt& B) {
-		int temp_d;
-		short temp_sign;
-		u32* temp_num;
-		temp_d = A.d;
-		A.d = B.d;
-		B.d = temp_d;
-		temp_sign = A.sign;
-		A.sign = B.sign;
-		B.sign = temp_sign;
-		temp_num = A.num;
-		A.num = B.num;
-		B.num = temp_num;
+		std::swap(A.d, B.d);
+		std::swap(A.sign, B.sign);
+		std::swap(A.num, B.num);
 	}
 
    private:  // get 10000^2d/A while A >=0
@@ -604,10 +588,10 @@ struct LInt {
 			return LInt(div / a);
 		}
 		int k = (A.d + 2) / 2;
-		LInt Ak(A.num + (A.d - k), k), _Ak, _A, _rA;
-		_Ak = Ak.recip();
-		_A = ((2 * _Ak) << (A.d - k)) - ((A * _Ak * _Ak) >> (2 * k));
-		_rA = (LInt(1) << (2 * A.d)) - _A * A;
+		LInt Ak(A.num.end(), std::prev(A.num.end(), k));
+		LInt _Ak = Ak.recip();
+		LInt _A = ((2 * _Ak) << (A.d - k)) - ((A * _Ak * _Ak) >> (2 * k));
+		LInt _rA = (LInt(1) << (2 * A.d)) - _A * A;
 		for (int delta = 0x08000000; delta > 0; delta /= 2) {
 			LInt temp = delta * A;
 			if (_rA < 0) {
@@ -634,29 +618,29 @@ struct LInt {
 		return ans;
 	}
 	LInt pow2() const { return (*this) * (*this); }
+
 	// Operator Function
 	const LInt operator<<(int k) const {
 		if (abnormal()) return *this;
 		if (k < 0) return LInt(false);
 		if (*this == 0) return LInt(0);
+
 		LInt ans(false);
-		u32* _num = new u32[d + k]();
-		for (int i = 0; i < d; i++) _num[i + k] = num[i];
-		ans.num = _num;
 		ans.d = d + k;
 		ans.sign = sign;
+		ans.num.assign(d + k, 0);
+		std::copy(num.begin(), num.end(), ans.num.begin() + k);
 		return ans;
 	}
 	const LInt operator>>(int k) const {
 		if (abnormal()) return *this;
 		if (k < 0) return LInt(false);
 		if (d <= k) return LInt(0);
-		LInt ans(false);
-		u32* _num = new u32[d - k];
-		for (int i = 0; i < d - k; i++) _num[i] = num[i + k];
-		ans.num = _num;
-		ans.d = d - k;
+
+		LInt ans;
 		ans.sign = sign;
+		ans.d = d - k;
+		ans.num.assign(num.begin() + k, num.end());
 		return ans;
 	}
 	const LInt operator-() const {
@@ -672,20 +656,20 @@ struct LInt {
 		if (A.sign == 2 || A.sign == -2) return (A.sign == -B.sign) ? LInt(false) : A;
 		if (B.sign == 2 || B.sign == -2) return (B.sign == -A.sign) ? LInt(false) : B;
 		if (A.sign == B.sign) {
-			LInt C;
-			C.sign = sign;
-			C.d = std::max(d, B.d) + 1;
-			C.num = new u32[C.d]();
-			for (int i = 0; i < C.d; i++) {
-				if (i < d) C.num[i] += num[i];
-				if (i < B.d) C.num[i] += B.num[i];
-				if (C.num[i] > 9999) {
-					C.num[i + 1] = C.num[i] / 10000;
-					C.num[i] %= 10000;
+			LInt ans;
+			ans.sign = sign;
+			ans.d = std::max(d, B.d) + 1;
+			ans.num.assign(ans.d, 0);
+			for (int i = 0; i < ans.d; i++) {
+				if (i < d) ans.num[i] += num[i];
+				if (i < B.d) ans.num[i] += B.num[i];
+				if (ans.num[i] > 9999) {
+					ans.num[i + 1] = ans.num[i] / 10000;
+					ans.num[i] %= 10000;
 				}
 			}
-			C.sho();
-			return C;
+			ans.sho();
+			return ans;
 		}
 		if (A.sign == 1 && B.sign == -1) {
 			LInt D;
@@ -698,7 +682,7 @@ struct LInt {
 				LInt ans;
 				ans.d = d;
 				ans.sign = 1;
-				ans.num = new u32[ans.d]();
+				ans.num.assign(ans.d, 0);
 				int i;
 				for (i = d - 1; i > 0; i--) {
 					if (i < d) ans.num[i] += num[i];
@@ -731,7 +715,7 @@ struct LInt {
 		if (A.zero() || B == 0) return 0;
 		if (B == 1 || B == -1) return B == 1 ? A : -A;
 		LInt ans;
-		ans.num = new u32[A.d + 3]();
+		ans.num.assign(A.d + 3, 0);
 		ans.sign = A.sign * (B < 0 ? -1 : (B > 0) ? 1 : 0);
 		if (B < 0) B = -B;
 		u64 temp = 0, carry = 0;
@@ -760,7 +744,7 @@ struct LInt {
 		register int x, y;
 		int N = _conv_length(A.d + B.d - 1);
 		ans.d = N + 2;
-		ans.num = new u32[ans.d]();
+		ans.num.assign(ans.d, 0);
 		ans.sign = A.sign * B.sign;
 		static double a[vol], b[vol], c[vol];
 		if (A.d <= Log_2(B.d) || Log_2(A.d) >= B.d) {
@@ -799,7 +783,7 @@ struct LInt {
 		LInt ans;
 		ans.d = d;
 		ans.sign = A.sign * (B > 0 ? 1 : -1);
-		ans.num = new u32[d]();
+		ans.num.assign(d, 0);
 		u32 abs_B = (B < 0 ? -B : B);
 		u64 temp = 0;
 		for (int i = d - 1; i >= 0; i--) {
@@ -878,91 +862,112 @@ struct LInt {
 		return *this - (*this / B) * B;
 	}
 	LInt& operator<<=(int k) {
+		if (k == 0) return *this;
 		LInt temp = *this << k;
-		if (num != 0) delete[] num;
-		num = temp.num;
-		temp.num = 0;
+#if __cplusplus >= 201103L
+		num = std::move(temp.num);
+#else
+		num.swap(temp.num);
+#endif
 		d = temp.d;
 		sign = temp.sign;
 		return *this;
 	}
 	LInt& operator>>=(int k) {
 		LInt temp = *this >> k;
-		if (num != 0) delete[] num;
-		num = temp.num;
-		temp.num = 0;
+#if __cplusplus >= 201103L
+		num = std::move(temp.num);
+#else
+		num.swap(temp.num);
+#endif
 		d = temp.d;
 		sign = temp.sign;
 		return *this;
 	}
 	LInt& operator+=(const LInt& B) {
 		LInt temp = *this + B;
-		if (num != 0) delete[] num;
-		num = temp.num;
-		temp.num = 0;
+#if __cplusplus >= 201103L
+		num = std::move(temp.num);
+#else
+		num.swap(temp.num);
+#endif
 		d = temp.d;
 		sign = temp.sign;
 		return *this;
 	}
 	LInt& operator-=(const LInt& B) {
 		LInt temp = *this - B;
-		if (num != 0) delete[] num;
-		num = temp.num;
-		temp.num = 0;
+#if __cplusplus >= 201103L
+		num = std::move(temp.num);
+#else
+		num.swap(temp.num);
+#endif
 		d = temp.d;
 		sign = temp.sign;
 		return *this;
 	}
 	LInt& operator*=(int p) {
 		LInt temp = *this * p;
-		if (num != 0) delete[] num;
-		num = temp.num;
-		temp.num = 0;
+#if __cplusplus >= 201103L
+		num = std::move(temp.num);
+#else
+		num.swap(temp.num);
+#endif
 		d = temp.d;
 		sign = temp.sign;
 		return *this;
 	}
 	LInt& operator*=(const LInt& B) {
 		LInt temp = *this * B;
-		if (num != 0) delete[] num;
-		num = temp.num;
-		temp.num = 0;
+#if __cplusplus >= 201103L
+		num = std::move(temp.num);
+#else
+		num.swap(temp.num);
+#endif
 		d = temp.d;
 		sign = temp.sign;
 		return *this;
 	}
 	LInt& operator/=(int p) {
 		LInt temp = *this / p;
-		if (num != 0) delete[] num;
-		num = temp.num;
-		temp.num = 0;
+#if __cplusplus >= 201103L
+		num = std::move(temp.num);
+#else
+		num.swap(temp.num);
+#endif
 		d = temp.d;
 		sign = temp.sign;
 		return *this;
 	}
 	LInt& operator/=(const LInt& B) {
 		LInt temp = *this / B;
-		if (num != 0) delete[] num;
-		num = temp.num;
-		temp.num = 0;
+#if __cplusplus >= 201103L
+		num = std::move(temp.num);
+#else
+		num.swap(temp.num);
+#endif
 		d = temp.d;
 		sign = temp.sign;
 		return *this;
 	}
 	LInt& operator%=(int B) {
 		LInt temp = *this % B;
-		if (num != 0) delete[] num;
-		num = temp.num;
-		temp.num = 0;
+#if __cplusplus >= 201103L
+		num = std::move(temp.num);
+#else
+		num.swap(temp.num);
+#endif
 		d = temp.d;
 		sign = temp.sign;
 		return *this;
 	}
 	LInt& operator%=(const LInt& B) {
 		LInt temp = *this % B;
-		if (num != 0) delete[] num;
-		num = temp.num;
-		temp.num = 0;
+#if __cplusplus >= 201103L
+		num = std::move(temp.num);
+#else
+		num.swap(temp.num);
+#endif
 		d = temp.d;
 		sign = temp.sign;
 		return *this;
@@ -994,7 +999,7 @@ struct LInt {
 	friend LInt operator*(int A, const LInt& B) { return B * A; }
 	friend std::ostream& operator<<(std::ostream& os, const LInt& A) {
 		if (A.sign == 0) {
-			if (A.num == 0) os.write("NaN", 3);
+			if (A.num.empty()) os.write("NaN", 3);
 			else os.put('0');
 		} else {
 			if (A.sign < 0) os.put('-');
@@ -1059,18 +1064,6 @@ struct LInt {
 		for (int i = 0; i < d; i++) temp = temp * 10000 + num[i];
 		if (sign < 0) temp = -temp;
 		return temp;
-	}
-
-	// about move semantics
-	LInt(LInt&& rvalue) noexcept : sign(rvalue.sign), d(rvalue.d), num(rvalue.num) { rvalue.num = nullptr; }
-	LInt& operator=(LInt&& rhs) noexcept {
-		using std::swap;
-		if (this != &rhs) {
-			swap(sign, rhs.sign);
-			swap(d, rhs.d);
-			swap(num, rhs.num);
-		}
-		return *this;
 	}
 #endif
 };
