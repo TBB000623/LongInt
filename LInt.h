@@ -480,7 +480,7 @@ struct LInt {
 			return;
 		}
 		if (sign == 0) {
-			if (num == 0) printf("NaN");
+			if (num.empty()) printf("NaN");
 			else putchar('0');
 			return;
 		}
@@ -489,7 +489,7 @@ struct LInt {
 		for (int i = d - 2; i >= 0; i--) Fast_0_out(num[i]);
 	}
 	string print_str() const {
-		if (sign == 0) return num == 0 ? string("NaN") : string("0");
+		if (sign == 0) return num.empty() ? string("NaN") : string("0");
 		if (sign == 2 || sign == -2) return sign == -2 ? string("-inf") : string("inf");
 		string ans;
 		if (sign == -1) ans += '-';
@@ -507,8 +507,8 @@ struct LInt {
 		cout << "LInt:\n";
 		cout << "Address: " << this << endl;
 		cout << "Sign: " << (sign > 0 ? '+' : (sign < 0 ? '-' : '0')) << '\t';
-		cout << "List address: " << num << '\t' << "size: " << d << endl;
-		if (d) {
+		cout << "Size: " << d << endl;
+		if (d > 0) {
 			cout << "Detail of the list: \n";
 			if (d < 100)
 				for (int k = 0; k < d; k++) cout << num[k] << (k % 8 == 7 ? '\n' : '\t');
@@ -520,7 +520,7 @@ struct LInt {
 			}
 		} else if (sign > 0) cout << "LInt = +inf\n";
 		else if (sign < 0) cout << "LInt = -inf\n";
-		else if (num != 0) cout << "LInt =0\n";
+		else if (!num.empty()) cout << "LInt = 0\n";
 		else cout << "LInt = NaN\n";
 		cout << "show LInt end.\n";
 	}
