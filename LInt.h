@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>  //version:3.5
+#include <iterator>
 #include <string>
 #include <vector>
 typedef unsigned long long u64;
@@ -596,11 +597,13 @@ struct LInt {
 		return ans;
 	}
 	LInt pow2() const { return (*this) * (*this); }
+
 	// Operator Function
 	const LInt operator<<(int k) const {
 		if (abnormal()) return *this;
 		if (k < 0) return LInt(false);
 		if (*this == 0) return LInt(0);
+
 		LInt ans(false);
 		ans.d = d + k;
 		ans.sign = sign;
@@ -612,6 +615,7 @@ struct LInt {
 		if (abnormal()) return *this;
 		if (k < 0) return LInt(false);
 		if (d <= k) return LInt(0);
+
 		LInt ans;
 		ans.sign = sign;
 		ans.d = d - k;
@@ -631,20 +635,20 @@ struct LInt {
 		if (A.sign == 2 || A.sign == -2) return (A.sign == -B.sign) ? LInt(false) : A;
 		if (B.sign == 2 || B.sign == -2) return (B.sign == -A.sign) ? LInt(false) : B;
 		if (A.sign == B.sign) {
-			LInt C;
-			C.sign = sign;
-			C.d = std::max(d, B.d) + 1;
-			C.num = new u32[C.d]();
-			for (int i = 0; i < C.d; i++) {
-				if (i < d) C.num[i] += num[i];
-				if (i < B.d) C.num[i] += B.num[i];
-				if (C.num[i] > 9999) {
-					C.num[i + 1] = C.num[i] / 10000;
-					C.num[i] %= 10000;
+			LInt ans;
+			ans.sign = sign;
+			ans.d = std::max(d, B.d) + 1;
+			ans.num.assign(ans.d, 0);
+			for (int i = 0; i < ans.d; i++) {
+				if (i < d) ans.num[i] += num[i];
+				if (i < B.d) ans.num[i] += B.num[i];
+				if (ans.num[i] > 9999) {
+					ans.num[i + 1] = ans.num[i] / 10000;
+					ans.num[i] %= 10000;
 				}
 			}
-			C.sho();
-			return C;
+			ans.sho();
+			return ans;
 		}
 		if (A.sign == 1 && B.sign == -1) {
 			LInt D;
@@ -657,7 +661,7 @@ struct LInt {
 				LInt ans;
 				ans.d = d;
 				ans.sign = 1;
-				ans.num = new u32[ans.d]();
+				ans.num.assign(ans.d, 0);
 				int i;
 				for (i = d - 1; i > 0; i--) {
 					if (i < d) ans.num[i] += num[i];
@@ -690,7 +694,7 @@ struct LInt {
 		if (A.zero() || B == 0) return 0;
 		if (B == 1 || B == -1) return B == 1 ? A : -A;
 		LInt ans;
-		ans.num = new u32[A.d + 3]();
+		ans.num.assign(A.d + 3, 0);
 		ans.sign = A.sign * (B < 0 ? -1 : (B > 0) ? 1 : 0);
 		if (B < 0) B = -B;
 		u64 temp = 0, carry = 0;
@@ -719,7 +723,7 @@ struct LInt {
 		register int x, y;
 		int N = _conv_length(A.d + B.d - 1);
 		ans.d = N + 2;
-		ans.num = new u32[ans.d]();
+		ans.num.assign(ans.d, 0);
 		ans.sign = A.sign * B.sign;
 		static double a[vol], b[vol], c[vol];
 		if (A.d <= Log_2(B.d) || Log_2(A.d) >= B.d) {
@@ -758,7 +762,7 @@ struct LInt {
 		LInt ans;
 		ans.d = d;
 		ans.sign = A.sign * (B > 0 ? 1 : -1);
-		ans.num = new u32[d]();
+		ans.num.assign(d, 0);
 		u32 abs_B = (B < 0 ? -B : B);
 		u64 temp = 0;
 		for (int i = d - 1; i >= 0; i--) {
