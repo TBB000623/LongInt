@@ -446,35 +446,31 @@ struct LInt {
 	}
 	inline LInt abs(const LInt& b) const { return b.abs(); }
 	void sho() {
-		if (sign == 2 || sign == -2) {
+		if (sign == 2 || sign == -2) {  // +inf or -inf
 			d = 0;
-			if (num != 0) {
-				delete[] num;
-				num = 0;
+			num.clear();
+			return;
+		}
+
+		if (sign == 0) {  // zero or NaN
+			d = 0;
+			if (!num.empty()) {
+				num.assign(1, 0);  // normalize zero representation
 			}
 			return;
 		}
-		if (sign == 0) {
-			d = 0;
-			if (num != 0) {
-				delete[] num;
-				num = new u32[0];
-			}
-			return;
-		}
-		int i = this->d - 1;
-		while (i >= 0 && num[i] == 0) i--;
+
+		int i = d - 1;
+		while (i >= 0 && num[i] == 0) --i;
+
 		if (i < 0) {
-			if (num) delete[] num;
-			num = new u32[0];
-			sign = d = 0;
+			sign = 0;
+			d = 0;
+			num.assign(1, 0);
 			return;
 		}
-		this->d = i + 1;
-		u32* pre = this->num;
-		num = new u32[this->d];
-		for (int j = 0; j < this->d; j++) num[j] = pre[j];
-		delete[] pre;
+		d = i + 1;
+		num.resize(d);
 		return;
 	}
 	void print() const {
