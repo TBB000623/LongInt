@@ -41,22 +41,6 @@ inline const char* i2s(int L, char* dest = 0) {  // converse int to classical C-
 	*dest = '\0';
 	return org;
 }
-void Fast_out(u32 a) {
-	if (a == 0) {
-		putchar('0');
-		return;
-	}
-	if (a > 9) {
-		Fast_out(a / 10);
-		putchar('0' + a % 10);
-	} else putchar('0' + a);
-}
-inline void Fast_0_out(u32 a, int len = 4) {
-	if (len >= 2 && a < 10) putchar('0');
-	if (len >= 3 && a < 100) putchar('0');
-	if (len >= 4 && a < 1000) putchar('0');
-	Fast_out(a);
-}
 inline const char* Fast_0_out_char(u32 a, char* dest = 0, int len = 4) {
 	static char temp[256];
 	if (dest == 0) dest = temp;
@@ -485,7 +469,39 @@ struct LInt {
 		delete[] pre;
 		return;
 	}
+
 	void print() const {
+#if __cplusplus >= 201103L
+		auto fast_out = [](u64 a) -> void {
+			if (a == 0) {
+				putchar('0');
+				return;
+			}
+			char buf[20];
+			int idx = 0;
+			while (a > 0) {
+				buf[idx++] = char('0' + (a % 10));
+				a /= 10;
+			}
+			for (int i = idx - 1; i >= 0; --i) putchar(buf[i]);
+		};
+#else
+		struct {
+			void operator()(u64 a) const {
+				if (a == 0) {
+					putchar('0');
+					return;
+				}
+				char buf[20];
+				int idx = 0;
+				while (a > 0) {
+					buf[idx++] = char('0' + (a % 10));
+					a /= 10;
+				}
+				for (int i = idx - 1; i >= 0; --i) putchar(buf[i]);
+			}
+		} fast_out;
+#endif
 		if (sign == 2 || sign == -2) {
 			if (sign == -2) putchar('-');
 			printf("inf");
@@ -497,8 +513,13 @@ struct LInt {
 			return;
 		}
 		if (sign == -1) putchar('-');
-		Fast_out(num[d - 1]);
-		for (int i = d - 2; i >= 0; i--) Fast_0_out(num[i]);
+		fast_out(num[d - 1]);
+		for (int i = d - 2; i >= 0; i--) {
+			if (num[i] < 1000) putchar('0');
+			if (num[i] < 100) putchar('0');
+			if (num[i] < 10) putchar('0');
+			fast_out(num[i]);
+		}
 	}
 	string print_str() const {
 		if (sign == 0) return num == 0 ? string("NaN") : string("0");
