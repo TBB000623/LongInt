@@ -841,91 +841,112 @@ struct LInt {
 		return *this - (*this / B) * B;
 	}
 	LInt& operator<<=(int k) {
+		if (k == 0) return *this;
 		LInt temp = *this << k;
-		if (num != 0) delete[] num;
-		num = temp.num;
-		temp.num = 0;
+#if __cplusplus >= 201103L
+		num = std::move(temp.num);
+#else
+		num.swap(temp.num);
+#endif
 		d = temp.d;
 		sign = temp.sign;
 		return *this;
 	}
 	LInt& operator>>=(int k) {
 		LInt temp = *this >> k;
-		if (num != 0) delete[] num;
-		num = temp.num;
-		temp.num = 0;
+#if __cplusplus >= 201103L
+		num = std::move(temp.num);
+#else
+		num.swap(temp.num);
+#endif
 		d = temp.d;
 		sign = temp.sign;
 		return *this;
 	}
 	LInt& operator+=(const LInt& B) {
 		LInt temp = *this + B;
-		if (num != 0) delete[] num;
-		num = temp.num;
-		temp.num = 0;
+#if __cplusplus >= 201103L
+		num = std::move(temp.num);
+#else
+		num.swap(temp.num);
+#endif
 		d = temp.d;
 		sign = temp.sign;
 		return *this;
 	}
 	LInt& operator-=(const LInt& B) {
 		LInt temp = *this - B;
-		if (num != 0) delete[] num;
-		num = temp.num;
-		temp.num = 0;
+#if __cplusplus >= 201103L
+		num = std::move(temp.num);
+#else
+		num.swap(temp.num);
+#endif
 		d = temp.d;
 		sign = temp.sign;
 		return *this;
 	}
 	LInt& operator*=(int p) {
 		LInt temp = *this * p;
-		if (num != 0) delete[] num;
-		num = temp.num;
-		temp.num = 0;
+#if __cplusplus >= 201103L
+		num = std::move(temp.num);
+#else
+		num.swap(temp.num);
+#endif
 		d = temp.d;
 		sign = temp.sign;
 		return *this;
 	}
 	LInt& operator*=(const LInt& B) {
 		LInt temp = *this * B;
-		if (num != 0) delete[] num;
-		num = temp.num;
-		temp.num = 0;
+#if __cplusplus >= 201103L
+		num = std::move(temp.num);
+#else
+		num.swap(temp.num);
+#endif
 		d = temp.d;
 		sign = temp.sign;
 		return *this;
 	}
 	LInt& operator/=(int p) {
 		LInt temp = *this / p;
-		if (num != 0) delete[] num;
-		num = temp.num;
-		temp.num = 0;
+#if __cplusplus >= 201103L
+		num = std::move(temp.num);
+#else
+		num.swap(temp.num);
+#endif
 		d = temp.d;
 		sign = temp.sign;
 		return *this;
 	}
 	LInt& operator/=(const LInt& B) {
 		LInt temp = *this / B;
-		if (num != 0) delete[] num;
-		num = temp.num;
-		temp.num = 0;
+#if __cplusplus >= 201103L
+		num = std::move(temp.num);
+#else
+		num.swap(temp.num);
+#endif
 		d = temp.d;
 		sign = temp.sign;
 		return *this;
 	}
 	LInt& operator%=(int B) {
 		LInt temp = *this % B;
-		if (num != 0) delete[] num;
-		num = temp.num;
-		temp.num = 0;
+#if __cplusplus >= 201103L
+		num = std::move(temp.num);
+#else
+		num.swap(temp.num);
+#endif
 		d = temp.d;
 		sign = temp.sign;
 		return *this;
 	}
 	LInt& operator%=(const LInt& B) {
 		LInt temp = *this % B;
-		if (num != 0) delete[] num;
-		num = temp.num;
-		temp.num = 0;
+#if __cplusplus >= 201103L
+		num = std::move(temp.num);
+#else
+		num.swap(temp.num);
+#endif
 		d = temp.d;
 		sign = temp.sign;
 		return *this;
