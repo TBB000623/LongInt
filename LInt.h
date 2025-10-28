@@ -356,36 +356,42 @@ struct LInt {
 			if (i % 4 == 0) num[i / 4] = temp, temp = 0;
 		}
 	}
-	LInt(const string& inString_) : num(0) { *this = inString_.c_str(); }
-	LInt(const LInt& A) : sign(A.sign), d(A.d), num(A.num.begin(), A.num.end()) {}
 	LInt(const u32* in_num, int k) : sign(1), d(k), num(in_num, in_num + k) { this->sho(); }
+#if __cplusplus >= 201103L
+	LInt(const LInt&) = default;
+	LInt(LInt&&) noexcept = default;
+	LInt(const string& inString_) : LInt(inString_.c_str()) {}
+#else
+	LInt(const LInt& A) : sign(A.sign), d(A.d), num(A.num) {}
+	LInt(const string& inString_) : num(0) { *this = LInt(inString_.c_str()); }
+#endif
 	// undo function
 	virtual ~LInt() {}
 	// assignment operator
+#if __cplusplus >= 201103L
+	LInt& operator=(const LInt&) = default;
+	LInt& operator=(LInt&&) noexcept = default;
+#else
 	LInt& operator=(const LInt& B) {
-		sign = B.sign;
-		d = B.d;
-		if (num != 0) delete[] num;
-		if (B.isNaN()) num = 0;
-		else {
-			num = new u32[d];
-			for (int i = 0; i < d; i++) num[i] = B.num[i];
+		if (this != &B) {
+			sign = B.sign;
+			d = B.d;
+			num = B.num;
 		}
 		return *this;
 	}
 	LInt& operator=(const char* inString) {
 		LInt temp(inString);
-		d = temp.d;
-		sign = temp.sign;
-		if (num != 0) delete[] num;
-		num = temp.num;
-		temp.num = 0;
+		std::swap(sign, temp.sign);
+		std::swap(d, temp.d);
+		std::swap(num, temp.num);
 		return *this;
 	}
 	inline LInt& operator=(bool b) { return *this = LInt(b); }
 	inline LInt& operator=(int i) { return *this = LInt(i); }
 	inline LInt& operator=(i64 i) { return *this = LInt(i); }
 	inline LInt& operator=(u64 u) { return *this = LInt(u); }
+#endif
 	// compare operator
 	bool operator<(const LInt& B) const {
 		const LInt& A = *this;
@@ -1024,18 +1030,6 @@ struct LInt {
 		for (int i = 0; i < d; i++) temp = temp * 10000 + num[i];
 		if (sign < 0) temp = -temp;
 		return temp;
-	}
-
-	// about move semantics
-	LInt(LInt&& rvalue) noexcept : sign(rvalue.sign), d(rvalue.d), num(rvalue.num) { rvalue.num = nullptr; }
-	LInt& operator=(LInt&& rhs) noexcept {
-		using std::swap;
-		if (this != &rhs) {
-			swap(sign, rhs.sign);
-			swap(d, rhs.d);
-			swap(num, rhs.num);
-		}
-		return *this;
 	}
 #endif
 };
