@@ -533,26 +533,17 @@ struct LInt {
 		if (zero()) return 0;
 		return strlen(i2s(num[d - 1])) + 4 * (d - 1);
 	}
-	inline bool isNaN() const { return (num == 0) && (d == 0) && (sign == 0); }
+	inline bool isNaN() const { return num.empty() && d == 0 && sign == 0; }
 	inline bool positive() const { return sign > 0; }
 	inline bool negative() const { return sign < 0; }
 	inline bool isinf() const { return sign == 2 || sign == -2; }
-	inline bool zero() const { return sign == 0 && num != 0; }
+	inline bool zero() const { return !num.empty() && sign == 0; }
 	inline bool meanless() const { return isNaN() || isinf(); }
 	inline bool abnormal() const { return zero() || isinf() || isNaN(); }
 	friend void swap(LInt& A, LInt& B) {
-		int temp_d;
-		short temp_sign;
-		u32* temp_num;
-		temp_d = A.d;
-		A.d = B.d;
-		B.d = temp_d;
-		temp_sign = A.sign;
-		A.sign = B.sign;
-		B.sign = temp_sign;
-		temp_num = A.num;
-		A.num = B.num;
-		B.num = temp_num;
+		std::swap(A.d, B.d);
+		std::swap(A.sign, B.sign);
+		std::swap(A.num, B.num);
 	}
 
    private:  // get 10000^2d/A while A >=0
