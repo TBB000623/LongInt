@@ -978,7 +978,7 @@ struct LInt {
 	friend LInt operator*(int A, const LInt& B) { return B * A; }
 	friend std::ostream& operator<<(std::ostream& os, const LInt& A) {
 		if (A.sign == 0) {
-			if (A.num == 0) os.write("NaN", 3);
+			if (A.num.empty()) os.write("NaN", 3);
 			else os.put('0');
 		} else {
 			if (A.sign < 0) os.put('-');
