@@ -979,7 +979,7 @@ struct LInt {
 		*this -= 1;
 		return b;
 	}
-	inline u32& operator[](int k) const {
+	inline u32& operator[](int k) {
 		static u32 wrong = 0;
 		if (zero()) return wrong = 0;
 		return num[k];
