@@ -562,10 +562,10 @@ struct LInt {
 	inline bool zero() const { return !num.empty() && sign == 0; }
 	inline bool meanless() const { return isNaN() || isinf(); }
 	inline bool abnormal() const { return zero() || isinf() || isNaN(); }
-	friend void swap(LInt& A, LInt& B) {
-		std::swap(A.d, B.d);
-		std::swap(A.sign, B.sign);
-		std::swap(A.num, B.num);
+	void swap(LInt& other) {
+		std::swap(sign, other.sign);
+		std::swap(d, other.d);
+		std::swap(num, other.num);
 	}
 
    private:  // get 10000^2d/A while A >=0
@@ -1056,6 +1056,7 @@ struct LInt {
 		A = in_s;
 		return is;
 	}
+	friend void swap(LInt& A, LInt& B) { A.swap(B); }
 #if __cplusplus >= 201103L
 	// converse to other classical type
 	explicit operator bool() const { return isinf() || isNaN(); }
