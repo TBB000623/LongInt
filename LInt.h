@@ -240,6 +240,7 @@ struct LInt {
 		if (b == false) {
 			if (code > 0) sign = 2;
 			if (code < 0) sign = -2;
+			num.clear();
 		}
 	}
 	LInt(int b) : sign(0), num(1, 0) {
@@ -709,8 +710,8 @@ struct LInt {
 	const LInt operator-(const LInt& B) const { return *this + (-B); }
 	const LInt operator*(int B) const {
 		const LInt& A = *this;
-		if (A.isNaN()) return false;
-		if (B == 0 && (A.sign == 2 || A.sign == -2)) return false;
+		if (A.isNaN()) return LInt(false);
+		if (B == 0 && (A.sign == 2 || A.sign == -2)) return LInt(false);
 		if (A.sign == 2 || A.sign == -2) return (B > 0) ? A : -A;
 		if (A.zero() || B == 0) return 0;
 		if (B == 1 || B == -1) return B == 1 ? A : -A;
@@ -735,8 +736,8 @@ struct LInt {
 	}
 	const LInt operator*(const LInt& B) const {
 		const LInt& A = *this;
-		if (A.isNaN() || B.isNaN()) return false;
-		if ((A.zero() && B.isinf()) || (A.isinf() && B.zero())) return false;
+		if (A.isNaN() || B.isNaN()) return LInt(false);
+		if ((A.zero() && B.isinf()) || (A.isinf() && B.zero())) return LInt(false);
 		if (A.isinf()) return (B.sign > 0) ? A : -A;
 		if (B.isinf()) return (A.sign > 0) ? B : -B;
 		if (A.zero() || B.zero()) return 0;
@@ -774,8 +775,8 @@ struct LInt {
 	const LInt operator/(int B) const {
 		if (B == 2) return this->div2();
 		const LInt& A = *this;
-		if (A.isNaN()) return false;
-		if (A == 0 && B == 0) return false;
+		if (A.isNaN()) return LInt(false);
+		if (A == 0 && B == 0) return LInt(false);
 		if (A == 0) return 0;
 		if (B == 0) return A.positive() ? "inf" : "-inf";
 		if (A.isinf()) return (B >= 0) ? A : -A;
@@ -797,8 +798,8 @@ struct LInt {
 	}
 	const LInt operator/(const LInt& B) const {
 		const LInt& A = *this;
-		if (A.isNaN() || B.isNaN()) return false;
-		if ((A == 0 && B == 0) || (A.isinf() && B.isinf())) return false;
+		if (A.isNaN() || B.isNaN()) return LInt(false);
+		if ((A == 0 && B == 0) || (A.isinf() && B.isinf())) return LInt(false);
 		if (A.isinf()) return (!B.negative()) ? A : -A;
 		if (B.isinf()) return 0;
 		if (A == 0) return 0;
@@ -842,7 +843,7 @@ struct LInt {
 	}
 	const LInt operator%(int B) const {
 		const LInt& A = *this;
-		if (A.isNaN() || A.isinf() || B == 0) return false;
+		if (A.isNaN() || A.isinf() || B == 0) return LInt(false);
 		if (A == 0) return 0;
 		u32 abs_B = (B < 0 ? -B : B);
 		u64 temp = 0;
@@ -856,7 +857,7 @@ struct LInt {
 	}
 	const LInt operator%(const LInt& B) const {
 		const LInt& A = *this;
-		if (A.isNaN() || B.isNaN() || A.isinf() || B == 0) return false;
+		if (A.isNaN() || B.isNaN() || A.isinf() || B == 0) return LInt(false);
 		if (B.isinf()) return B.positive() ? A : -A;
 		if (A == 0) return 0;
 		return *this - (*this / B) * B;
@@ -1068,8 +1069,6 @@ struct LInt {
 	}
 #endif
 };
-
-const LInt _LInt_nan;
 
 template <typename T = LInt>
 T mul_pow10(const T&, int);
