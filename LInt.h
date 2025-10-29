@@ -599,7 +599,7 @@ struct LInt {
 	LInt pow2() const { return (*this) * (*this); }
 
 	// Operator Function
-	const LInt operator<<(int k) const {
+	LInt operator<<(int k) const {
 		if (abnormal()) return *this;
 		if (k < 0) return LInt(false);
 		if (*this == 0) return LInt(0);
@@ -611,7 +611,7 @@ struct LInt {
 		std::copy(num.begin(), num.end(), ans.num.begin() + k);
 		return ans;
 	}
-	const LInt operator>>(int k) const {
+	LInt operator>>(int k) const {
 		if (abnormal()) return *this;
 		if (k < 0) return LInt(false);
 		if (d <= k) return LInt(0);
@@ -622,12 +622,12 @@ struct LInt {
 		ans.num.assign(num.begin() + k, num.end());
 		return ans;
 	}
-	const LInt operator-() const {
+	LInt operator-() const {
 		LInt ans(*this);
 		ans.sign = -ans.sign;
 		return ans;
 	}
-	const LInt operator+(const LInt& B) const {
+	LInt operator+(const LInt& B) const {
 		const LInt& A = *this;
 		if (A.isNaN() || B.isNaN()) return LInt(false);
 		if (B.sign == 0) return A;
@@ -685,8 +685,8 @@ struct LInt {
 			return B + (*this);
 		}
 	}
-	const LInt operator-(const LInt& B) const { return *this + (-B); }
-	const LInt operator*(int B) const {
+	LInt operator-(const LInt& B) const { return *this + (-B); }
+	LInt operator*(int B) const {
 		const LInt& A = *this;
 		if (A.isNaN()) return false;
 		if (B == 0 && (A.sign == 2 || A.sign == -2)) return false;
@@ -712,7 +712,7 @@ struct LInt {
 		ans.sho();
 		return ans;
 	}
-	const LInt operator*(const LInt& B) const {
+	LInt operator*(const LInt& B) const {
 		const LInt& A = *this;
 		if (A.isNaN() || B.isNaN()) return false;
 		if ((A.zero() && B.isinf()) || (A.isinf() && B.zero())) return false;
@@ -750,7 +750,7 @@ struct LInt {
 		ans.sho();
 		return ans;
 	}
-	const LInt operator/(int B) const {
+	LInt operator/(int B) const {
 		if (B == 2) return this->div2();
 		const LInt& A = *this;
 		if (A.isNaN()) return false;
@@ -774,7 +774,7 @@ struct LInt {
 		ans.sho();
 		return ans;
 	}
-	const LInt operator/(const LInt& B) const {
+	LInt operator/(const LInt& B) const {
 		const LInt& A = *this;
 		if (A.isNaN() || B.isNaN()) return false;
 		if ((A == 0 && B == 0) || (A.isinf() && B.isinf())) return false;
@@ -819,7 +819,7 @@ struct LInt {
 			return quoti;
 		}
 	}
-	const LInt operator%(int B) const {
+	LInt operator%(int B) const {
 		const LInt& A = *this;
 		if (A.isNaN() || A.isinf() || B == 0) return false;
 		if (A == 0) return 0;
@@ -833,7 +833,7 @@ struct LInt {
 		temp *= d * (B < 0 ? -1 : 1);
 		return temp;
 	}
-	const LInt operator%(const LInt& B) const {
+	LInt operator%(const LInt& B) const {
 		const LInt& A = *this;
 		if (A.isNaN() || B.isNaN() || A.isinf() || B == 0) return false;
 		if (B.isinf()) return B.positive() ? A : -A;
@@ -952,13 +952,13 @@ struct LInt {
 		return *this;
 	}
 	inline LInt& operator++(void) { return *this += 1; }
-	inline const LInt operator++(int) {
+	inline LInt operator++(int) {
 		LInt b = *this;
 		*this += 1;
 		return b;
 	}
 	inline LInt& operator--(void) { return *this -= 1; }
-	inline const LInt operator--(int) {
+	inline LInt operator--(int) {
 		LInt b = *this;
 		*this -= 1;
 		return b;
