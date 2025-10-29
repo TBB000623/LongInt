@@ -588,7 +588,7 @@ struct LInt {
 			return LInt(div / a);
 		}
 		int k = (A.d + 2) / 2;
-		LInt Ak(A.num.end(), std::prev(A.num.end(), k));
+		LInt Ak(std::prev(A.num.end(), k), A.num.end());
 		LInt _Ak = Ak.recip();
 		LInt _A = ((2 * _Ak) << (A.d - k)) - ((A * _Ak * _Ak) >> (2 * k));
 		LInt _rA = (LInt(1) << (2 * A.d)) - _A * A;
