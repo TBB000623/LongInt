@@ -243,47 +243,47 @@ struct LInt {
 		}
 	}
 	LInt(int b) : sign(0), num(1, 0) {
-		i64 tb = b;
+		i64 ub = b;
 		if (b == 0) {
 			d = 0;
 			return;
 		}
 		if (b > 0) sign = 1;
-		if (b < 0) sign = -1, tb = -tb;
+		if (b < 0) sign = -1, ub = -ub;
 
-		if (tb > 99999999) d = 3;
-		else if (tb > 9999) d = 2;
+		if (ub > 99999999) d = 3;
+		else if (ub > 9999) d = 2;
 		else d = 1;
 		num.resize(d, 0);
-		for (int i = 0; i < d && tb > 0; i++) {
-			num[i] = b % 10000;
-			b /= 10000;
+		for (int i = 0; i < d && ub > 0; i++) {
+			num[i] = ub % 10000;
+			ub /= 10000;
 		}
 	}
 	LInt(i64 b) : sign(0), num(1, 0) {
-		u64 ub;
 		if (b == 0) {
 			d = 0;
 			return;
 		}
+		u64 ub = 0;
 		if (b < 0) sign = -1, ub = static_cast<u64>(-(b + 1)) + 1ull;
 		if (b > 0) sign = 1, ub = static_cast<u64>(b);
-		if (sign != 0) {
-			if (ub > 9999999999999999ull) d = 5;
-			else if (ub > 999999999999ull) d = 4;
-			else if (ub > 99999999) d = 3;
-			else if (ub > 9999) d = 2;
-			else d = 1;
-			num.resize(d);
-			for (int i = 0; i < d && b > 0; i++) {
-				num[i] = ub % 10000;
-				ub /= 10000;
-			}
+
+		if (ub > 9999999999999999ull) d = 5;
+		else if (ub > 999999999999ull) d = 4;
+		else if (ub > 99999999) d = 3;
+		else if (ub > 9999) d = 2;
+		else d = 1;
+		num.resize(d);
+		for (int i = 0; i < d && ub > 0; i++) {
+			num[i] = static_cast<u32>(ub % 10000);
+			ub /= 10000;
 		}
 	}
 	LInt(u64 b) : num(1, 0) {
 		if (b == 0) {
 			sign = d = 0;
+			return;
 		} else {
 			sign = 1;
 			if (b > 9999999999999999ull) d = 5;
@@ -293,7 +293,7 @@ struct LInt {
 			else d = 1;
 			num.resize(d);
 			for (int i = 0; i < d && b > 0; i++) {
-				num[i] = b % 10000;
+				num[i] = static_cast<u32>(b % 10000);
 				b /= 10000;
 			}
 		}
