@@ -78,13 +78,13 @@ inline int _conv_length(int n) {
 	int power_3 = 0, base_3 = 1, min_height = 0x7fffffff, best_length = 0;
 	do {
 		base_3 *= 3, ++power_3;
-		int power_2 = Log_2(n / base_3);
-		int conv_height = 3 * power_3 + 2 * power_2;
+		int power_2 = Log_2((n / base_3) + int((n % base_3) != 0));
+		int conv_height = 95 * power_3 + 100 * power_2;
 		if (conv_height < min_height) {
 			min_height = conv_height;
 			best_length = (1 << power_2) * base_3;
 		}
-	} while (base_3 <= n);
+	} while (base_3 <= n && power_3 <= 6);
 	return best_length * 2;
 }
 // structure complex, DFT, FFT & circulate conversion
@@ -119,8 +119,9 @@ struct complex {
 		return complex(std::cos(2 * Pi * i / s), std::sin(2 * Pi * i / s));
 	}
 };
-bool pre_init = false;
+
 void DFT(const complex* A, complex* a, int n, bool inv = false) {
+	// std::cerr << "DFT: " << n << std::endl;
 	static const int vol = base_vol / 2;
 	if (n == 0) {
 		a[0] = A[0];
@@ -144,7 +145,7 @@ void DFT(const complex* A, complex* a, int n, bool inv = false) {
 	if (last_n != n) {
 		rev[0] = 0;
 		int rev_length = 1;
-		for (int i = factor_length - 1; i >= 0; --i) {
+		for (int i = 0; i < factor_length; ++i) {
 			int scale = factor_list[i];
 			for (int k = 0; k < rev_length; ++k) rev[k] *= scale;
 			for (int j = 1; j < scale; ++j)
@@ -158,6 +159,7 @@ void DFT(const complex* A, complex* a, int n, bool inv = false) {
 	complex (*ce)(int, int) = tbb::complex::complex_exp;
 	for (int i = 0, size = 1; i < factor_length; ++i) {
 		int scale = factor_list[i], new_size = size * scale;
+		// std::cerr << "scale: " << scale << std::endl;
 		for (int j = 0; j < new_size; ++j) rt[j] = inv ? ce(-j, new_size) : ce(j, new_size);
 		for (int u = 0; u < scale; ++u)
 			for (int v = 0; v < scale; ++v) rt_mat[u][v] = inv ? ce(-u * v, scale) : ce(u * v, scale);
@@ -171,6 +173,7 @@ void DFT(const complex* A, complex* a, int n, bool inv = false) {
 				}
 			}
 		}
+		// for(int i = 0; i < n; ++i)	std::cerr << rev[i] << ' ' <<  temp[i] << std::endl;
 		size = new_size;
 	}
 
@@ -178,6 +181,7 @@ void DFT(const complex* A, complex* a, int n, bool inv = false) {
 		for (register int i = 0; i < n; i++) temp[i] = temp[i] / n;
 	for (register int i = 0; i < n; i++) a[i] = temp[i];
 }
+
 void circ_conv(const double* A, const double* B, double* C, int n) {
 	const int vol = base_vol;
 	if (n <= 1024) {
