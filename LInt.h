@@ -186,9 +186,9 @@ void circ_conv(const double* A, const double* B, double* C, int n) {
 	const int vol = base_vol;
 	if (n <= 1024) {
 		for (register int t = 0; t < n; ++t) {
-			double* c = C + t;
-			*c = 0;
-			for (const double *a = A + t, *b = B; b < B + n; ++b, (a == A) ? (a = A + n - 1) : (--a)) *c += *a * *b;
+			C[t] = 0;
+			for (int i = 0; i <= t; ++i) C[t] += A[i] * B[t - i];
+			for (int i = n - 1; i >= t + 1; ++i) C[t] += A[i] * B[n + t - i];
 		}
 		return;
 	}
