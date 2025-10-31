@@ -15,7 +15,7 @@ typedef long long i64;
 typedef int i32;
 typedef unsigned u32;
 namespace tbb {
-const int vol = 1 << 18;
+const int vol = 1 << 21;
 const int base_vol = vol;
 using std::cin;
 using std::cout;
@@ -751,18 +751,17 @@ struct LInt {
 		ans.d = N + 2;
 		ans.num.assign(ans.d, 0);
 		ans.sign = A.sign * B.sign;
-		static double a[vol], b[vol], c[vol];
+
+		std::vector<double> a, b, c(N, 0);
 		if (A.d <= Log_2(B.d) || Log_2(A.d) >= B.d) {
-			for (x = 0; x < N; x++) c[x] = 0;
 			for (x = 0; x < A.d; x++)
 				for (y = 0; y < B.d; y++) c[x + y] += A.num[x] * B.num[y];
 		} else {
-			for (x = 0; x < A.d; x++) a[x] = A.num[x];
-			for (y = 0; y < B.d; y++) b[y] = B.num[y];
-			for (x = A.d; x < N; x++) a[x] = 0;
-			for (y = B.d; y < N; y++) b[y] = 0;
-			for (x = 0; x < N; x++) c[x] = 0;
-			circ_conv(a, b, c, N);
+			a.assign(A.num.begin(), A.num.end());
+			a.resize(N, 0);
+			b.assign(B.num.begin(), B.num.end());
+			b.resize(N, 0);
+			circ_conv(a.data(), b.data(), c.data(), N);
 		}
 		double carry = 0.0;
 		for (int i = 0; i < N; i++) {
