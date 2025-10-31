@@ -693,6 +693,7 @@ struct LInt {
 		if (B == 1 || B == -1) return B == 1 ? A : -A;
 		LInt ans;
 		ans.num.assign(A.d + 3, 0);
+		ans.d = 0;
 		ans.sign = A.sign * (B < 0 ? -1 : (B > 0) ? 1 : 0);
 		if (B < 0) B = -B;
 		u64 temp = 0, carry = 0;
