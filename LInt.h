@@ -828,8 +828,9 @@ struct LInt {
 			temp += num[i];
 			temp %= abs_B;
 		}
-		temp *= sign * (B < 0 ? -1 : 1);
-		return LInt(temp);
+		i64 rem = static_cast<i64>(temp);
+		if (A.sign < 0) rem = -rem;
+		return LInt(rem);
 	}
 	LInt operator%(const LInt& B) const {
 		const LInt& A = *this;
