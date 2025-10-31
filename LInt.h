@@ -22,46 +22,6 @@ using std::cout;
 using std::endl;
 using std::string;
 
-inline int s2i(const char* begin, const char* end) {  // converse string to int
-	int tmp = 0, sig = 1;
-	if (*begin == '+' || *begin == '-') sig = (*(begin++) == '+') ? 1 : -1;
-	for (const char* t = begin; t < end; t++) tmp = tmp * 10 + (*t - '0');
-	return tmp * sig;
-}
-inline const char* i2s(int L, char* dest = 0) {  // converse int to classical C-style string and return it
-	static char temp[20];
-	if (dest == 0) dest = temp;
-	if (L == 0) {
-		dest[0] = '0', dest[1] = '\0';
-		return dest;
-	}
-	char* org = dest;
-	if (L < 0) dest[0] = '-', dest++, L = -L;
-	u32 t = 1;
-	while (t <= unsigned(L)) t *= 10;
-	while (t != 1) t /= 10, *(dest++) = '0' + (L / t), L %= t;
-	*dest = '\0';
-	return org;
-}
-inline const char* Fast_0_out_char(u32 a, char* dest = 0, int len = 4) {
-	static char temp[256];
-	if (dest == 0) dest = temp;
-	if (len > 256) len = 255;
-	const char* a_str = i2s(a);
-	int left_0 = len - strlen(a_str);
-	if (left_0 < 0) left_0 = 0;
-	for (int i = 0; i < left_0; i++) dest[i] = '0';
-	for (int j = 0; a_str[j] != 0; j++) dest[left_0 + j] = a_str[j];
-	dest[std::max(len, int(strlen(a_str)))] = '\0';
-	return dest;
-}
-inline std::string Fast_0_out_str(u32 a, int len = 4) {
-	const char* a_str = i2s(a);
-	int left_0 = len - strlen(a_str);
-	if (left_0 < 0) left_0 = 0;
-	string ans(left_0, '0');
-	return ans + a_str;
-}
 int Log_2(int base) {
 	int i;
 	for (i = 0; ((1 << i) < base) && (i < 32); i++);
@@ -515,6 +475,23 @@ struct LInt {
 		if (sign == 2 || sign == -2) return sign == -2 ? string("-inf") : string("inf");
 		string ans;
 		if (sign == -1) ans += '-';
+
+		auto i2s = [](int L, char* dest = 0) -> const char* {  // converse int to classical C-style string and return it
+			static char temp[20];
+			if (dest == 0) dest = temp;
+			if (L == 0) {
+				dest[0] = '0', dest[1] = '\0';
+				return dest;
+			}
+			char* org = dest;
+			if (L < 0) dest[0] = '-', dest++, L = -L;
+			u32 t = 1;
+			while (t <= unsigned(L)) t *= 10;
+			while (t != 1) t /= 10, *(dest++) = '0' + (L / t), L %= t;
+			*dest = '\0';
+			return org;
+		};
+
 		ans += i2s(num[d - 1]);
 		ans.reserve(ans.size() + 4 * d);
 		for (int i = d - 2; i >= 0; i--) {
@@ -549,7 +526,11 @@ struct LInt {
 	int digit() const {
 		if (isinf()) return -1;
 		if (zero()) return 0;
-		return strlen(i2s(num[d - 1])) + 4 * (d - 1);
+
+		u32 k = num[d - 1];
+		int t = 0;
+		while (k > 0) k /= 10, ++t;
+		return t + 4 * (d - 1);
 	}
 	inline bool isNaN() const { return num.empty() && d == 0 && sign == 0; }
 	inline bool positive() const { return sign > 0; }
