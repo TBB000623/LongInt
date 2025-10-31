@@ -90,33 +90,24 @@ inline int _conv_length(int n) {
 // structure complex, DFT, FFT & circulate conversion
 struct complex {
 	double x, y;
-	complex(const complex& A) : x(A.x), y(A.y) {}
-	complex(double _x = 0, double _y = 0) : x(_x), y(_y) {}
-	complex& operator=(const double& B) {
-		x = B, y = 0;
-		return *this;
-	}
-	complex& operator=(const complex& B) {
-		x = B.x, y = B.y;
-		return *this;
-	}
+
 	inline double abs() const { return std::sqrt(((*this) * conj()).x); }
-	inline complex conj() const { return complex(x, -y); }
-	inline complex left() const { return complex(-y, x); }
-	inline complex right() const { return complex(y, -x); }
-	inline complex operator-(void) const { return complex(-x, -y); }
-	inline complex operator+(const double& B) const { return complex(x + B, y); }
-	inline complex operator-(const double& B) const { return complex(x - B, y); }
-	inline complex operator*(const double& B) const { return complex(x * B, y * B); }
-	inline complex operator/(const double& B) const { return complex(x / B, y / B); }
-	inline complex operator+(const complex& B) const { return complex(x + B.x, y + B.y); }
-	inline complex operator-(const complex& B) const { return complex(x - B.x, y - B.y); }
-	inline complex operator*(const complex& B) const { return complex((x * B.x - y * B.y), (x * B.y + y * B.x)); }
+	inline complex conj() const { return {x, -y}; }
+	inline complex left() const { return {-y, x}; }
+	inline complex right() const { return {y, -x}; }
+	inline complex operator-(void) const { return {-x, -y}; }
+	inline complex operator+(const double& B) const { return {x + B, y}; }
+	inline complex operator-(const double& B) const { return {x - B, y}; }
+	inline complex operator*(const double& B) const { return {x * B, y * B}; }
+	inline complex operator/(const double& B) const { return {x / B, y / B}; }
+	inline complex operator+(const complex& B) const { return {x + B.x, y + B.y}; }
+	inline complex operator-(const complex& B) const { return {x - B.x, y - B.y}; }
+	inline complex operator*(const complex& B) const { return {(x * B.x - y * B.y), (x * B.y + y * B.x)}; }
 	inline complex operator/(const complex& B) const { return (*this) * B.conj() / (B * B.conj()).x; }
 	inline complex& operator+=(const complex& B) { return *this = *this + B; }
 	static complex complex_exp(int i, int s) {
 		const double Pi = 3.14159265358979323846;
-		return complex(std::cos(2 * Pi * i / s), std::sin(2 * Pi * i / s));
+		return {std::cos(2 * Pi * i / s), std::sin(2 * Pi * i / s)};
 	}
 };
 
@@ -168,7 +159,7 @@ void DFT(const complex* A, complex* a, int n, bool inv = false) {
 				static complex rot[10];
 				for (int t = 0; t < scale; ++t) rot[t] = temp[k + j + t * size] * rt[(j * t) % new_size];
 				for (int t = 0; t < scale; ++t) {
-					temp[k + j + t * size] = 0;
+					temp[k + j + t * size] = complex{0, 0};
 					for (int ti = 0; ti < scale; ++ti) temp[k + j + t * size] += rt_mat[t][ti] * rot[ti];
 				}
 			}
