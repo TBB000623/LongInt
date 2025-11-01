@@ -82,6 +82,7 @@ class complex_expotional {
 			N = 0;
 			return;
 		}
+		if (N > 0 && N % n == 0) return;
 		N = n;
 		table.resize(N);
 
@@ -131,6 +132,8 @@ class complex_expotional {
 	}
 };
 
+complex_expotional root_table;
+
 void DFT(const complex* A, complex* a, int n, bool inv = false) {
 	// std::cerr << "DFT: " << n << std::endl;
 	static const int vol = base_vol / 2;
@@ -167,13 +170,12 @@ void DFT(const complex* A, complex* a, int n, bool inv = false) {
 	}
 
 	for (register int i = 0; i < n; i++) temp[i] = A[rev[i]];
-	complex (*ce)(int, int) = tbb::complex::complex_exp;
 	for (int i = 0, size = 1; i < factor_length; ++i) {
 		int scale = factor_list[i], new_size = size * scale;
 		// std::cerr << "scale: " << scale << std::endl;
-		for (int j = 0; j < new_size; ++j) rt[j] = inv ? ce(-j, new_size) : ce(j, new_size);
+		for (int j = 0; j < new_size; ++j) rt[j] = inv ? root_table(-j, new_size) : root_table(j, new_size);
 		for (int u = 0; u < scale; ++u)
-			for (int v = 0; v < scale; ++v) rt_mat[u][v] = inv ? ce(-u * v, scale) : ce(u * v, scale);
+			for (int v = 0; v < scale; ++v) rt_mat[u][v] = inv ? root_table(-u * v, scale) : root_table(u * v, scale);
 		for (int k = 0; k < n; k += new_size) {
 			for (int j = 0; j < size; ++j) {
 				static complex rot[10];
@@ -203,6 +205,9 @@ void circ_conv(const double* A, const double* B, double* C, int n) {
 		}
 		return;
 	}
+
+	root_table.precompute(n / 2);
+
 	typedef complex cmxd;
 	static int last_n;
 	static double A_0[vol], B_0[vol];
@@ -235,7 +240,7 @@ void circ_conv(const double* A, const double* B, double* C, int n) {
 	}
 
 	for (register int i = 0; i < n / 2; i++) {
-		c_0[i] = a_0[i] * b_0[i] + a_1[i] * b_1[i] * complex::complex_exp(2 * i, n);
+		c_0[i] = a_0[i] * b_0[i] + a_1[i] * b_1[i] * root_table(i, n / 2);
 		c_1[i] = a_0[i] * b_1[i] + a_1[i] * b_0[i];
 	}
 	for (register int i = 0; i < n / 2; i++) P[i] = c_0[i] + c_1[i].right();
