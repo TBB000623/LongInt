@@ -194,16 +194,22 @@ void circ_conv(const double* A, const double* B, double* C, int n) {
 	}
 	typedef complex cmxd;
 	static int last_n;
-	static double A_0[vol], B_0[vol];
-	static cmxd P[vol / 2], Q[vol / 2];
-	static cmxd a_0[vol / 2], a_1[vol / 2], b_0[vol / 2], b_1[vol / 2];
-	static cmxd c_0[vol / 2], c_1[vol / 2];
+	static std::vector<double> A_0, B_0;
+	static std::vector<cmxd> P, Q;
+	static std::vector<cmxd> a_0, a_1, b_0, b_1;
+	static std::vector<cmxd> c_0, c_1;
 	bool checkA, checkB, checkAB;
 	int it;
+	if (last_n != n) {
+		P.resize(n / 2), Q.resize(n / 2);
+		a_0.resize(n / 2), a_1.resize(n / 2), b_0.resize(n / 2), b_1.resize(n / 2);
+		c_0.resize(n / 2), c_1.resize(n / 2);
+	}
 	for (checkA = (last_n == n), it = 0; checkA && it < n; it++) checkA = A_0[it] == A[it];
 	if (!checkA) {
-		for (register int i = 0; i < n / 2; i++) P[i].x = A_0[i << 1] = A[i << 1], P[i].y = A_0[(i << 1) | 1] = A[(i << 1) | 1];
-		DFT(P, P, n / 2, false);
+		A_0.assign(A, A + n);
+		for (register int i = 0; i < n / 2; i++) P[i] = cmxd{A[i << 1], A[(i << 1) | 1]};
+		DFT(P.data(), P.data(), n / 2, false);
 		Q[0] = P[0].conj();
 		for (register int i = 1; i < n / 2; i++) Q[i] = P[n / 2 - i].conj();
 		for (register int i = 0; i < n / 2; i++) a_0[i] = (P[i] + Q[i]) / 2, a_1[i] = ((P[i] - Q[i]) / 2).left();
@@ -215,8 +221,9 @@ void circ_conv(const double* A, const double* B, double* C, int n) {
 	else {
 		for (checkB = (last_n == n), it = 0; checkB && it < n; it++) checkB = B_0[it] == B[it];
 		if (!checkB) {
-			for (register int i = 0; i < n / 2; i++) P[i].x = B_0[i << 1] = B[i << 1], P[i].y = B_0[(i << 1) | 1] = B[(i << 1) | 1];
-			DFT(P, P, n / 2, false);
+			B_0.assign(B, B + n);
+			for (register int i = 0; i < n / 2; i++) P[i] = cmxd{B[i << 1], B[(i << 1) | 1]};
+			DFT(P.data(), P.data(), n / 2, false);
 			Q[0] = P[0].conj();
 			for (register int i = 1; i < n / 2; i++) Q[i] = P[n / 2 - i].conj();
 			for (register int i = 0; i < n / 2; i++) b_0[i] = (P[i] + Q[i]) / 2, b_1[i] = ((P[i] - Q[i]) / 2).left();
@@ -228,7 +235,7 @@ void circ_conv(const double* A, const double* B, double* C, int n) {
 		c_1[i] = a_0[i] * b_1[i] + a_1[i] * b_0[i];
 	}
 	for (register int i = 0; i < n / 2; i++) P[i] = c_0[i] + c_1[i].right();
-	DFT(P, P, n / 2, true);
+	DFT(P.data(), P.data(), n / 2, true);
 	for (register int i = 0; i < n / 2; i++) C[i << 1] = P[i].x, C[(i << 1) | 1] = P[i].y;
 	last_n = n;
 }
