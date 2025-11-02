@@ -147,6 +147,7 @@ void DFT(const complex* A, complex* a, int n, bool inv = false) {
 	struct {
 		int operator()(int fnum, int* flist) {
 			int n = 0;
+			while (fnum % 4 == 0) flist[n++] = 4, fnum /= 4;
 			for (int i = 2; i * i <= fnum; ++i) {
 				while (fnum % i == 0) flist[n++] = i, fnum /= i;
 			}
@@ -178,13 +179,42 @@ void DFT(const complex* A, complex* a, int n, bool inv = false) {
 		for (int j = 0; j < new_size; ++j) rt[j] = inv ? root_table(-j, new_size) : root_table(j, new_size);
 		for (int u = 0; u < scale; ++u)
 			for (int v = 0; v < scale; ++v) rt_mat[u][v] = inv ? root_table(-u * v, scale) : root_table(u * v, scale);
-		for (int k = 0; k < n; k += new_size) {
+		for (int chuck_base = 0; chuck_base < n; chuck_base += new_size) {
 			for (int j = 0; j < size; ++j) {
-				static complex rot[10];
-				for (int t = 0; t < scale; ++t) rot[t] = temp[k + j + t * size] * rt[(j * t) % new_size];
-				for (int t = 0; t < scale; ++t) {
-					temp[k + j + t * size] = complex{0, 0};
-					for (int ti = 0; ti < scale; ++ti) temp[k + j + t * size] += rt_mat[t][ti] * rot[ti];
+				if (scale == 2) {
+					complex x_0, x_1;
+					x_0 = temp[chuck_base + j];
+					x_1 = temp[chuck_base + j + size] * rt[j];
+					temp[chuck_base + j] = x_0 + x_1;
+					temp[chuck_base + j + size] = x_0 - x_1;
+				} else if (scale == 3) {
+					complex x_0 = temp[chuck_base + j + 0 * size];
+					complex x_1 = temp[chuck_base + j + 1 * size] * rt[j];
+					complex x_2 = temp[chuck_base + j + 2 * size] * rt[j * 2];
+					complex s_1 = x_1 + x_2, y_1 = complex{-s_1.x / 2, -s_1.y / 2};  // y_1 = -(1/2) * (x_1 + x_2)
+					complex s_2 = ((x_1 - x_2) * (std::sqrt(3) / 2)).left();         // s_2 = (\sqrt{3}/2) * (x_1 - x_2)
+					complex y_2 = inv ? (-s_2) : s_2;
+					temp[chuck_base + j + 0 * size] = x_0 + s_1;
+					temp[chuck_base + j + 1 * size] = x_0 + y_1 + y_2;
+					temp[chuck_base + j + 2 * size] = x_0 + y_1 - y_2;
+				} else if (scale == 4) {
+					complex x_0 = temp[chuck_base + j + 0 * size];
+					complex x_1 = temp[chuck_base + j + 1 * size] * rt[j * 1];
+					complex x_2 = temp[chuck_base + j + 2 * size] * rt[j * 2];
+					complex x_3 = temp[chuck_base + j + 3 * size] * rt[j * 3];
+					complex a_02 = x_0 + x_2, s_02 = x_0 - x_2;
+					complex a_13 = x_1 + x_3, s_13 = x_1 - x_3;
+					temp[chuck_base + j + 0 * size] = a_02 + a_13;
+					temp[chuck_base + j + 2 * size] = a_02 - a_13;
+					temp[chuck_base + j + 1 * size] = s_02 + (inv ? s_13.right() : s_13.left());
+					temp[chuck_base + j + 3 * size] = s_02 - (inv ? s_13.right() : s_13.left());
+				} else {
+					static complex rot[10];
+					for (int t = 0; t < scale; ++t) rot[t] = temp[chuck_base + j + t * size] * rt[(j * t) % new_size];
+					for (int t = 0; t < scale; ++t) {
+						temp[chuck_base + j + t * size] = complex{0, 0};
+						for (int ti = 0; ti < scale; ++ti) temp[chuck_base + j + t * size] += rt_mat[t][ti] * rot[ti];
+					}
 				}
 			}
 		}
