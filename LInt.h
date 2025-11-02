@@ -112,7 +112,7 @@ class complex_expotional {
 
 complex_expotional root_table;
 
-void DFT(const complex* A, complex* a, int n, bool inv = false) {
+void DFT(const std::vector<complex>& A, std::vector<complex>& a, int n, bool inv = false) {
 	using std::vector;
 	if (n <= 0) return;
 	if (n == 1) {
@@ -136,7 +136,7 @@ void DFT(const complex* A, complex* a, int n, bool inv = false) {
 	static vector<int> rev{};
 	static vector<complex> rt;
 	static complex rt_mat[10][10];
-	static vector<complex> temp;
+	vector<complex> temp;
 	if (rev.size() != n) {
 		rev.assign(n, 0);
 		rev[0] = 0;
@@ -208,10 +208,10 @@ void DFT(const complex* A, complex* a, int n, bool inv = false) {
 
 	if (inv)
 		for (register int i = 0; i < n; i++) temp[i] = temp[i] / n;
-	for (register int i = 0; i < n; i++) a[i] = temp[i];
+	a = temp;
 }
 
-void circ_conv(const double* A, const double* B, double* C, int n) {
+void circ_conv(const std::vector<double>& A, const std::vector<double>& B, std::vector<double>& C, int n) {
 	using std::vector;
 
 	if (n <= 1024) {
@@ -238,25 +238,24 @@ void circ_conv(const double* A, const double* B, double* C, int n) {
 		a_0.resize(n / 2), a_1.resize(n / 2), b_0.resize(n / 2), b_1.resize(n / 2);
 		c_0.resize(n / 2), c_1.resize(n / 2);
 	}
-	for (checkA = (last_n == n), it = 0; checkA && it < n; it++) checkA = A_0[it] == A[it];
+	checkA = (A_0 == A);
 	if (!checkA) {
-		A_0.assign(A, A + n);
+		A_0 = A;
 		for (register int i = 0; i < n / 2; i++) P[i] = cmxd{A[i << 1], A[(i << 1) | 1]};
-		DFT(P.data(), P.data(), n / 2, false);
+		DFT(P, P, n / 2, false);
 		Q[0] = P[0].conj();
 		for (register int i = 1; i < n / 2; i++) Q[i] = P[n / 2 - i].conj();
 		for (register int i = 0; i < n / 2; i++) a_0[i] = (P[i] + Q[i]) / 2, a_1[i] = ((P[i] - Q[i]) / 2).left();
 	}
 
-	for (checkAB = true, it = 0; checkAB && it < n; it++) checkAB = A[it] == B[it];
-	if (checkAB)
-		for (it = 0; it < n / 2; it++) b_0[it] = a_0[it], b_1[it] = a_1[it];
+	checkAB = (A == B);
+	if (checkAB) b_0 = a_0, b_1 = a_1;
 	else {
-		for (checkB = (last_n == n), it = 0; checkB && it < n; it++) checkB = B_0[it] == B[it];
+		checkB = (B_0 == B);
 		if (!checkB) {
-			B_0.assign(B, B + n);
+			B_0 = B;
 			for (register int i = 0; i < n / 2; i++) P[i] = cmxd{B[i << 1], B[(i << 1) | 1]};
-			DFT(P.data(), P.data(), n / 2, false);
+			DFT(P, P, n / 2, false);
 			Q[0] = P[0].conj();
 			for (register int i = 1; i < n / 2; i++) Q[i] = P[n / 2 - i].conj();
 			for (register int i = 0; i < n / 2; i++) b_0[i] = (P[i] + Q[i]) / 2, b_1[i] = ((P[i] - Q[i]) / 2).left();
@@ -268,7 +267,7 @@ void circ_conv(const double* A, const double* B, double* C, int n) {
 		c_1[i] = a_0[i] * b_1[i] + a_1[i] * b_0[i];
 	}
 	for (register int i = 0; i < n / 2; i++) P[i] = c_0[i] + c_1[i].right();
-	DFT(P.data(), P.data(), n / 2, true);
+	DFT(P, P, n / 2, true);
 	for (register int i = 0; i < n / 2; i++) C[i << 1] = P[i].x, C[(i << 1) | 1] = P[i].y;
 	last_n = n;
 }
@@ -841,7 +840,7 @@ struct LInt {
 			a.assign(A.num.begin(), A.num.end());
 			b.assign(B.num.begin(), B.num.end());
 			a.resize(N, 0), b.resize(N, 0);
-			circ_conv(a.data(), b.data(), c.data(), N);
+			circ_conv(a, b, c, N);
 		}
 		double carry = 0.0;
 		for (int i = 0; i < N; i++) {
