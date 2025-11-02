@@ -114,8 +114,8 @@ complex_expotional root_table;
 
 void DFT(const complex* A, complex* a, int n, bool inv = false) {
 	using std::vector;
-
-	if (n == 0) {
+	if (n <= 0) return;
+	if (n == 1) {
 		a[0] = A[0];
 		return;
 	}
@@ -124,7 +124,7 @@ void DFT(const complex* A, complex* a, int n, bool inv = false) {
 		int operator()(int fnum, vector<int>& flist) {
 			flist.clear();
 			int n = 0;
-			while (fnum % 4 == 0) flist[n++] = 4, fnum /= 4;
+			while (fnum % 4 == 0) flist.push_back(4), fnum /= 4;
 			for (int i = 2; i * i <= fnum; ++i) {
 				while (fnum % i == 0) flist.push_back(i), fnum /= i;
 			}
