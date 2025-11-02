@@ -27,28 +27,6 @@ int Log_2(int base) {
 	for (i = 0; ((1 << i) < base) && (i < 32); i++);
 	return i;
 }
-inline int higdgst(int A) {
-	if (A < 0) A = -A;
-	while (A / 10 != 0) A /= 10;
-	return A;
-}
-inline int _conv_length(int n) {
-	// if(n < 1024)	return 1 << Log_2(n);
-	n = (n + 1) / 2;
-	int power_3 = 0, base_3 = 1, best_length = 0;
-	i64 min_height = 0x7fffffffffffffffLL;
-	do {
-		base_3 *= 3, ++power_3;
-		int power_2 = Log_2((n / base_3) + int((n % base_3) != 0));
-		int conv_length = (1 << power_2) * base_3;
-		i64 conv_height = static_cast<i64>(conv_length) * (95 * power_3 + 100 * power_2);
-		if (conv_height < min_height) {
-			min_height = conv_height;
-			best_length = (1 << power_2) * base_3;
-		}
-	} while (base_3 <= n && power_3 <= 6);
-	return best_length * 2;
-}
 // structure complex, DFT, FFT & circulate conversion
 struct complex {
 	double x, y;
@@ -812,6 +790,24 @@ struct LInt {
 		return ans;
 	}
 	LInt operator*(const LInt& B) const {
+		auto _conv_length = [](int n) -> int {
+			// if(n < 1024)	return 1 << Log_2(n);
+			n = (n + 1) / 2;
+			int power_3 = 0, base_3 = 1, best_length = 0;
+			i64 min_height = 0x7fffffffffffffffLL;
+			do {
+				base_3 *= 3, ++power_3;
+				int power_2 = Log_2((n / base_3) + int((n % base_3) != 0));
+				int conv_length = (1 << power_2) * base_3;
+				i64 conv_height = static_cast<i64>(conv_length) * (95 * power_3 + 100 * power_2);
+				if (conv_height < min_height) {
+					min_height = conv_height;
+					best_length = (1 << power_2) * base_3;
+				}
+			} while (base_3 <= n && power_3 <= 6);
+			return best_length * 2;
+		};
+
 		const LInt& A = *this;
 		if (A.isNaN() || B.isNaN()) return LInt(false);
 		if ((A.zero() && B.isinf()) || (A.isinf() && B.zero())) return LInt(false);
