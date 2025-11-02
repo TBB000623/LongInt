@@ -6,7 +6,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <iostream>  //version:3.5
+#include <iostream>  //version:3.6.0
 #include <iterator>
 #include <string>
 #include <vector>
@@ -20,103 +20,97 @@ using std::cout;
 using std::endl;
 using std::string;
 
-inline int s2i(const char* begin, const char* end) {  // converse string to int
-	int tmp = 0, sig = 1;
-	if (*begin == '+' || *begin == '-') sig = (*(begin++) == '+') ? 1 : -1;
-	for (const char* t = begin; t < end; t++) tmp = tmp * 10 + (*t - '0');
-	return tmp * sig;
-}
-inline const char* i2s(int L, char* dest = 0) {  // converse int to classical C-style string and return it
-	static char temp[20];
-	if (dest == 0) dest = temp;
-	if (L == 0) {
-		dest[0] = '0', dest[1] = '\0';
-		return dest;
-	}
-	char* org = dest;
-	if (L < 0) dest[0] = '-', dest++, L = -L;
-	u32 t = 1;
-	while (t <= unsigned(L)) t *= 10;
-	while (t != 1) t /= 10, *(dest++) = '0' + (L / t), L %= t;
-	*dest = '\0';
-	return org;
-}
-inline const char* Fast_0_out_char(u32 a, char* dest = 0, int len = 4) {
-	static char temp[256];
-	if (dest == 0) dest = temp;
-	if (len > 256) len = 255;
-	const char* a_str = i2s(a);
-	int left_0 = len - strlen(a_str);
-	if (left_0 < 0) left_0 = 0;
-	for (int i = 0; i < left_0; i++) dest[i] = '0';
-	for (int j = 0; a_str[j] != 0; j++) dest[left_0 + j] = a_str[j];
-	dest[std::max(len, int(strlen(a_str)))] = '\0';
-	return dest;
-}
-inline std::string Fast_0_out_str(u32 a, int len = 4) {
-	const char* a_str = i2s(a);
-	int left_0 = len - strlen(a_str);
-	if (left_0 < 0) left_0 = 0;
-	string ans(left_0, '0');
-	return ans + a_str;
-}
 int Log_2(int base) {
 	int i;
 	for (i = 0; ((1 << i) < base) && (i < 32); i++);
 	return i;
 }
-inline int higdgst(int A) {
-	if (A < 0) A = -A;
-	while (A / 10 != 0) A /= 10;
-	return A;
-}
-inline int _conv_length(int n) {
-	// if(n < 1024)	return 1 << Log_2(n);
-	n = (n + 1) / 2;
-	int power_3 = 0, base_3 = 1, min_height = 0x7fffffff, best_length = 0;
-	do {
-		base_3 *= 3, ++power_3;
-		int power_2 = Log_2((n / base_3) + int((n % base_3) != 0));
-		int conv_height = 95 * power_3 + 100 * power_2;
-		if (conv_height < min_height) {
-			min_height = conv_height;
-			best_length = (1 << power_2) * base_3;
-		}
-	} while (base_3 <= n && power_3 <= 6);
-	return best_length * 2;
-}
 // structure complex, DFT, FFT & circulate conversion
 struct complex {
 	double x, y;
-	complex(const complex& A) : x(A.x), y(A.y) {}
-	complex(double _x = 0, double _y = 0) : x(_x), y(_y) {}
-	complex& operator=(const double& B) {
-		x = B, y = 0;
-		return *this;
-	}
-	complex& operator=(const complex& B) {
-		x = B.x, y = B.y;
-		return *this;
-	}
+
 	inline double abs() const { return std::sqrt(((*this) * conj()).x); }
-	inline complex conj() const { return complex(x, -y); }
-	inline complex left() const { return complex(-y, x); }
-	inline complex right() const { return complex(y, -x); }
-	inline complex operator-(void) const { return complex(-x, -y); }
-	inline complex operator+(const double& B) const { return complex(x + B, y); }
-	inline complex operator-(const double& B) const { return complex(x - B, y); }
-	inline complex operator*(const double& B) const { return complex(x * B, y * B); }
-	inline complex operator/(const double& B) const { return complex(x / B, y / B); }
-	inline complex operator+(const complex& B) const { return complex(x + B.x, y + B.y); }
-	inline complex operator-(const complex& B) const { return complex(x - B.x, y - B.y); }
-	inline complex operator*(const complex& B) const { return complex((x * B.x - y * B.y), (x * B.y + y * B.x)); }
+	inline complex conj() const { return {x, -y}; }
+	inline complex left() const { return {-y, x}; }
+	inline complex right() const { return {y, -x}; }
+	inline complex operator-(void) const { return {-x, -y}; }
+	inline complex operator+(const double& B) const { return {x + B, y}; }
+	inline complex operator-(const double& B) const { return {x - B, y}; }
+	inline complex operator*(const double& B) const { return {x * B, y * B}; }
+	inline complex operator/(const double& B) const { return {x / B, y / B}; }
+	inline complex operator+(const complex& B) const { return {x + B.x, y + B.y}; }
+	inline complex operator-(const complex& B) const { return {x - B.x, y - B.y}; }
+	inline complex operator*(const complex& B) const { return {(x * B.x - y * B.y), (x * B.y + y * B.x)}; }
 	inline complex operator/(const complex& B) const { return (*this) * B.conj() / (B * B.conj()).x; }
 	inline complex& operator+=(const complex& B) { return *this = *this + B; }
 	static complex complex_exp(int i, int s) {
 		const double Pi = 3.14159265358979323846;
-		return complex(std::cos(2 * Pi * i / s), std::sin(2 * Pi * i / s));
+		return {std::cos(2 * Pi * i / s), std::sin(2 * Pi * i / s)};
 	}
 };
+
+class complex_expotional {
+	std::vector<tbb::complex> table;
+	int N = 0;
+
+   public:
+	void precompute(int n, int recompute_period = 256) {
+		if (n <= 0) {
+			table.clear();
+			N = 0;
+			return;
+		}
+		if (N > 0 && N % n == 0) return;
+		N = n;
+		table.resize(N);
+
+		if (recompute_period <= 0) recompute_period = 1;
+
+		const long double PI = 3.141592653589793238462643383279502884L;
+		long double theta = 2.0L * PI / (long double)N;
+		long double cos_step = std::cos(theta);
+		long double sin_step = std::sin(theta);
+
+		for (int base = 0; base < N; base += recompute_period) {
+			long double alpha = static_cast<long double>(base) * theta;
+			long double cos_base = std::cos(alpha);
+			long double sin_base = std::sin(alpha);
+
+			int left_bound = base;
+			int right_bound = std::min(N, base + recompute_period);
+			for (int idx = left_bound; idx < right_bound; ++idx) {
+				table[idx] = {static_cast<double>(cos_base), static_cast<double>(sin_base)};
+				long double cos_next = cos_base * cos_step - sin_base * sin_step;
+				long double sin_next = sin_base * cos_step + cos_base * sin_step;
+				cos_base = cos_next, sin_base = sin_next;
+			}
+		}
+	}
+
+	tbb::complex operator()(int k, int n = 0) const {
+		if (n == 0) {
+			if (N <= 0) {
+				return tbb::complex{1, 0};
+			}
+			int kk = k % N;
+			if (kk < 0) kk += N;
+			return table[kk];
+		} else {
+			if (n < 0) {
+				return tbb::complex{1, 0};
+			}
+			int kk = k % n;
+			if (kk < 0) kk += n;
+			if (N > 0 && N % n == 0) {
+				int idx = kk * (N / n);
+				return table[idx];
+			}
+			return tbb::complex::complex_exp(kk, n);
+		}
+	}
+};
+
+complex_expotional root_table;
 
 void DFT(const complex* A, complex* a, int n, bool inv = false) {
 	using std::vector;
@@ -130,6 +124,7 @@ void DFT(const complex* A, complex* a, int n, bool inv = false) {
 		int operator()(int fnum, vector<int>& flist) {
 			flist.clear();
 			int n = 0;
+			while (fnum % 4 == 0) flist[n++] = 4, fnum /= 4;
 			for (int i = 2; i * i <= fnum; ++i) {
 				while (fnum % i == 0) flist.push_back(i), fnum /= i;
 			}
@@ -158,20 +153,52 @@ void DFT(const complex* A, complex* a, int n, bool inv = false) {
 	if (temp.size() < n) temp.resize(n);
 
 	for (register int i = 0; i < n; i++) temp[i] = A[rev[i]];
-	complex (*ce)(int, int) = tbb::complex::complex_exp;
+
 	for (int i = 0, size = 1; i < factor_list.size(); ++i) {
 		int scale = factor_list[i], new_size = size * scale;
 		// std::cerr << "scale: " << scale << std::endl;
-		for (int j = 0; j < new_size; ++j) rt[j] = inv ? ce(-j, new_size) : ce(j, new_size);
+		for (int j = 0; j < new_size; ++j) rt[j] = inv ? root_table(-j, new_size) : root_table(j, new_size);
 		for (int u = 0; u < scale; ++u)
-			for (int v = 0; v < scale; ++v) rt_mat[u][v] = inv ? ce(-u * v, scale) : ce(u * v, scale);
-		for (int k = 0; k < n; k += new_size) {
+			for (int v = 0; v < scale; ++v) rt_mat[u][v] = inv ? root_table(-u * v, scale) : root_table(u * v, scale);
+		for (int chuck_base = 0; chuck_base < n; chuck_base += new_size) {
+			for (int t = 1; t < scale; ++t) {
+				for (int j = 1; j < size; ++j) temp[chuck_base + j + t * size] = temp[chuck_base + j + t * size] * rt[j * t];
+			}
 			for (int j = 0; j < size; ++j) {
-				static complex rot[10];
-				for (int t = 0; t < scale; ++t) rot[t] = temp[k + j + t * size] * rt[(j * t) % new_size];
-				for (int t = 0; t < scale; ++t) {
-					temp[k + j + t * size] = 0;
-					for (int ti = 0; ti < scale; ++ti) temp[k + j + t * size] += rt_mat[t][ti] * rot[ti];
+				if (scale == 2) {
+					complex x_0, x_1;
+					x_0 = temp[chuck_base + j];
+					x_1 = temp[chuck_base + j + size];
+					temp[chuck_base + j] = x_0 + x_1;
+					temp[chuck_base + j + size] = x_0 - x_1;
+				} else if (scale == 3) {
+					complex x_0 = temp[chuck_base + j + 0 * size];
+					complex x_1 = temp[chuck_base + j + 1 * size];
+					complex x_2 = temp[chuck_base + j + 2 * size];
+					complex s_1 = x_1 + x_2, y_1 = complex{-s_1.x / 2, -s_1.y / 2};  // y_1 = -(1/2) * (x_1 + x_2)
+					complex s_2 = ((x_1 - x_2) * (std::sqrt(3) / 2)).left();         // s_2 = (\sqrt{3}/2) * (x_1 - x_2)
+					complex y_2 = inv ? (-s_2) : s_2;
+					temp[chuck_base + j + 0 * size] = x_0 + s_1;
+					temp[chuck_base + j + 1 * size] = x_0 + y_1 + y_2;
+					temp[chuck_base + j + 2 * size] = x_0 + y_1 - y_2;
+				} else if (scale == 4) {
+					complex x_0 = temp[chuck_base + j + 0 * size];
+					complex x_1 = temp[chuck_base + j + 1 * size];
+					complex x_2 = temp[chuck_base + j + 2 * size];
+					complex x_3 = temp[chuck_base + j + 3 * size];
+					complex a_02 = x_0 + x_2, s_02 = x_0 - x_2;
+					complex a_13 = x_1 + x_3, s_13 = x_1 - x_3;
+					temp[chuck_base + j + 0 * size] = a_02 + a_13;
+					temp[chuck_base + j + 2 * size] = a_02 - a_13;
+					temp[chuck_base + j + 1 * size] = s_02 + (inv ? s_13.right() : s_13.left());
+					temp[chuck_base + j + 3 * size] = s_02 - (inv ? s_13.right() : s_13.left());
+				} else {
+					static complex rot[10];
+					for (int t = 0; t < scale; ++t) rot[t] = temp[chuck_base + j + t * size];
+					for (int t = 0; t < scale; ++t) {
+						temp[chuck_base + j + t * size] = complex{0, 0};
+						for (int ti = 0; ti < scale; ++ti) temp[chuck_base + j + t * size] += rt_mat[t][ti] * rot[ti];
+					}
 				}
 			}
 		}
@@ -189,12 +216,15 @@ void circ_conv(const double* A, const double* B, double* C, int n) {
 
 	if (n <= 1024) {
 		for (register int t = 0; t < n; ++t) {
-			double* c = C + t;
-			*c = 0;
-			for (const double *a = A + t, *b = B; b < B + n; ++b, (a == A) ? (a = A + n - 1) : (--a)) *c += *a * *b;
+			C[t] = 0;
+			for (int i = 0; i <= t; ++i) C[t] += A[i] * B[t - i];
+			for (int i = n - 1; i >= t + 1; ++i) C[t] += A[i] * B[n + t - i];
 		}
 		return;
 	}
+
+	root_table.precompute(n / 2);
+
 	typedef complex cmxd;
 	static int last_n;
 	static vector<double> A_0, B_0;
@@ -234,7 +264,7 @@ void circ_conv(const double* A, const double* B, double* C, int n) {
 	}
 
 	for (register int i = 0; i < n / 2; i++) {
-		c_0[i] = a_0[i] * b_0[i] + a_1[i] * b_1[i] * complex::complex_exp(2 * i, n);
+		c_0[i] = a_0[i] * b_0[i] + a_1[i] * b_1[i] * root_table(i, n / 2);
 		c_1[i] = a_0[i] * b_1[i] + a_1[i] * b_0[i];
 	}
 	for (register int i = 0; i < n / 2; i++) P[i] = c_0[i] + c_1[i].right();
@@ -534,6 +564,23 @@ struct LInt {
 		if (sign == 2 || sign == -2) return sign == -2 ? string("-inf") : string("inf");
 		string ans;
 		if (sign == -1) ans += '-';
+
+		auto i2s = [](int L, char* dest = 0) -> const char* {  // converse int to classical C-style string and return it
+			static char temp[20];
+			if (dest == 0) dest = temp;
+			if (L == 0) {
+				dest[0] = '0', dest[1] = '\0';
+				return dest;
+			}
+			char* org = dest;
+			if (L < 0) dest[0] = '-', dest++, L = -L;
+			u32 t = 1;
+			while (t <= unsigned(L)) t *= 10;
+			while (t != 1) t /= 10, *(dest++) = '0' + (L / t), L %= t;
+			*dest = '\0';
+			return org;
+		};
+
 		ans += i2s(num[d - 1]);
 		ans.reserve(ans.size() + 4 * d);
 		for (int i = d - 2; i >= 0; i--) {
@@ -568,7 +615,11 @@ struct LInt {
 	int digit() const {
 		if (isinf()) return -1;
 		if (zero()) return 0;
-		return strlen(i2s(num[d - 1])) + 4 * (d - 1);
+
+		u32 k = num[d - 1];
+		int t = 0;
+		while (k > 0) k /= 10, ++t;
+		return t + 4 * (d - 1);
 	}
 	inline bool isNaN() const { return num.empty() && d == 0 && sign == 0; }
 	inline bool positive() const { return sign > 0; }
@@ -731,6 +782,7 @@ struct LInt {
 		if (B == 1 || B == -1) return B == 1 ? A : -A;
 		LInt ans;
 		ans.num.assign(A.d + 3, 0);
+		ans.d = 0;
 		ans.sign = A.sign * (B < 0 ? -1 : (B > 0) ? 1 : 0);
 		if (B < 0) B = -B;
 		u64 temp = 0, carry = 0;
@@ -749,6 +801,24 @@ struct LInt {
 		return ans;
 	}
 	LInt operator*(const LInt& B) const {
+		auto _conv_length = [](int n) -> int {
+			// if(n < 1024)	return 1 << Log_2(n);
+			n = (n + 1) / 2;
+			int power_3 = 0, base_3 = 1, best_length = 0;
+			i64 min_height = 0x7fffffffffffffffLL;
+			do {
+				base_3 *= 3, ++power_3;
+				int power_2 = Log_2((n / base_3) + int((n % base_3) != 0));
+				int conv_length = (1 << power_2) * base_3;
+				i64 conv_height = static_cast<i64>(conv_length) * (95 * power_3 + 100 * power_2);
+				if (conv_height < min_height) {
+					min_height = conv_height;
+					best_length = (1 << power_2) * base_3;
+				}
+			} while (base_3 <= n && power_3 <= 6);
+			return best_length * 2;
+		};
+
 		const LInt& A = *this;
 		if (A.isNaN() || B.isNaN()) return LInt(false);
 		if ((A.zero() && B.isinf()) || (A.isinf() && B.zero())) return LInt(false);
@@ -865,8 +935,9 @@ struct LInt {
 			temp += num[i];
 			temp %= abs_B;
 		}
-		temp *= d * (B < 0 ? -1 : 1);
-		return temp;
+		i64 rem = static_cast<i64>(temp);
+		if (A.sign < 0) rem = -rem;
+		return LInt(rem);
 	}
 	LInt operator%(const LInt& B) const {
 		const LInt& A = *this;
