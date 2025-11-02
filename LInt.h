@@ -121,43 +121,47 @@ struct complex {
 };
 
 void DFT(const complex* A, complex* a, int n, bool inv = false) {
-	// std::cerr << "DFT: " << n << std::endl;
-	static const int vol = base_vol / 2;
+	using std::vector;
+
 	if (n == 0) {
 		a[0] = A[0];
 		return;
 	}
-	int factor_list[32], factor_length;
+	vector<int> factor_list;
 	struct {
-		int operator()(int fnum, int* flist) {
+		int operator()(int fnum, vector<int>& flist) {
+			flist.clear();
 			int n = 0;
 			for (int i = 2; i * i <= fnum; ++i) {
-				while (fnum % i == 0) flist[n++] = i, fnum /= i;
+				while (fnum % i == 0) flist.push_back(i), fnum /= i;
 			}
-			if (fnum != 1) flist[n++] = fnum;
-			return n;
+			if (fnum != 1) flist.push_back(fnum);
+			return flist.size();
 		}
 	} Factor;
-	factor_length = Factor(n, factor_list);
-	static int rev[vol], last_n = 0;
-	static complex rt[vol + 1], rt_mat[10][10];
-	static complex temp[vol];
-	if (last_n != n) {
+	Factor(n, factor_list);
+	static vector<int> rev{};
+	static vector<complex> rt;
+	static complex rt_mat[10][10];
+	static vector<complex> temp;
+	if (rev.size() != n) {
+		rev.assign(n, 0);
 		rev[0] = 0;
 		int rev_length = 1;
-		for (int i = 0; i < factor_length; ++i) {
+		for (int i = 0; i < factor_list.size(); ++i) {
 			int scale = factor_list[i];
 			for (int k = 0; k < rev_length; ++k) rev[k] *= scale;
 			for (int j = 1; j < scale; ++j)
 				for (int k = 0; k < rev_length; ++k) rev[j * rev_length + k] = j + rev[k];
 			rev_length *= scale;
 		}
-		last_n = n;
 	}
+	if (rt.size() < n) rt.resize(n);
+	if (temp.size() < n) temp.resize(n);
 
 	for (register int i = 0; i < n; i++) temp[i] = A[rev[i]];
 	complex (*ce)(int, int) = tbb::complex::complex_exp;
-	for (int i = 0, size = 1; i < factor_length; ++i) {
+	for (int i = 0, size = 1; i < factor_list.size(); ++i) {
 		int scale = factor_list[i], new_size = size * scale;
 		// std::cerr << "scale: " << scale << std::endl;
 		for (int j = 0; j < new_size; ++j) rt[j] = inv ? ce(-j, new_size) : ce(j, new_size);
@@ -183,7 +187,8 @@ void DFT(const complex* A, complex* a, int n, bool inv = false) {
 }
 
 void circ_conv(const double* A, const double* B, double* C, int n) {
-	const int vol = base_vol;
+	using std::vector;
+
 	if (n <= 1024) {
 		for (register int t = 0; t < n; ++t) {
 			double* c = C + t;
@@ -194,10 +199,10 @@ void circ_conv(const double* A, const double* B, double* C, int n) {
 	}
 	typedef complex cmxd;
 	static int last_n;
-	static std::vector<double> A_0, B_0;
-	static std::vector<cmxd> P, Q;
-	static std::vector<cmxd> a_0, a_1, b_0, b_1;
-	static std::vector<cmxd> c_0, c_1;
+	static vector<double> A_0, B_0;
+	static vector<cmxd> P, Q;
+	static vector<cmxd> a_0, a_1, b_0, b_1;
+	static vector<cmxd> c_0, c_1;
 	bool checkA, checkB, checkAB;
 	int it;
 	if (last_n != n) {
