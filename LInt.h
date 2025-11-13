@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <iomanip>
 #include <iostream>  //version:3.6.0
 #include <iterator>
 #include <string>
@@ -590,26 +591,62 @@ struct LInt {
 		}
 		return ans;
 	}
-	void show() const {
-		cout << "LInt:\n";
-		cout << "Address: " << this << endl;
-		cout << "Sign: " << (sign > 0 ? '+' : (sign < 0 ? '-' : '0')) << '\t';
-		cout << "Size: " << d << endl;
+	void show(std::ostream& os = std::cout) const {
+		using std::endl;
+		using std::left;
+		using std::right;
+		using std::setfill;
+		using std::setw;
+
+		os << "========[ LInt ]========" << endl;
+		os << left << setw(10) << "Address:" << static_cast<const void*>(this) << endl;
+		os << left << setw(10) << "Sign:" << (sign > 0 ? '+' : (sign < 0 ? '-' : '0')) << endl;
+		os << left << setw(10) << "Size:" << d << " (blocks)" << endl;
+
 		if (d > 0) {
-			cout << "Detail of the list: \n";
-			if (d < 100)
-				for (int k = 0; k < d; k++) cout << num[k] << (k % 8 == 7 ? '\n' : '\t');
-			else {
-				int t = int(std::sqrt(d));
-				for (int k = 0; k < t; k++) cout << num[k] << (k % 8 == 7 ? '\n' : '\t');
-				cout << "...\n";
-				for (int k = 0; k < t; k++) cout << num[d - t + k] << (k % 8 == 7 ? '\n' : '\t');
+			os << left << setw(10) << "Detail:" << endl;
+			const int cols = 8;      // 每行显示几组（索引:值）
+			const int valWidth = 4;  // 值域宽度
+			const int idxWidth = 6;  // 索引宽度
+
+			int printCount = d;
+			if (d >= 100) printCount = int(std::ceil(::sqrt((double)d) / cols)) * cols;  // 前后摘要长度
+
+			// 先输出高位（从 d-1 向下）
+			int printed = 0;
+			for (int k = 0; k < printCount; ++k) {
+				int idx = d - 1 - k;
+				os << right << setw(idxWidth) << idx << ": " << setw(valWidth) << setfill('0') << num[idx] << setfill(' ');
+				++printed;
+				if ((printed % cols) == 0) os << endl;
+				else os << '\t';
 			}
-		} else if (sign > 0) cout << "LInt = +inf\n";
-		else if (sign < 0) cout << "LInt = -inf\n";
-		else if (!num.empty()) cout << "LInt = 0\n";
-		else cout << "LInt = NaN\n";
-		cout << "show LInt end.\n";
+			if ((printed % cols) != 0) os << endl;
+
+			if (d >= 100) {
+				os << "    ..." << endl;
+				// 再输出低位（从 0 向上）
+				printed = 0;
+				for (int k = printCount - 1; k >= 0; --k) {
+					int idx = k;
+					os << right << setw(idxWidth) << idx << ": " << setw(valWidth) << setfill('0') << num[idx] << setfill(' ');
+					++printed;
+					if ((printed % cols) == 0) os << endl;
+					else os << '\t';
+				}
+				if ((printed % cols) != 0) os << endl;
+			}
+		} else if (sign > 0) {
+			os << "LInt = +inf" << endl;
+		} else if (sign < 0) {
+			os << "LInt = -inf" << endl;
+		} else if (!num.empty()) {
+			os << "LInt = 0" << endl;
+		} else {
+			os << "LInt = NaN" << endl;
+		}
+
+		os << "=========================" << endl;
 	}
 	int digit() const {
 		if (isinf()) return -1;
