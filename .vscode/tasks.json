@@ -20,8 +20,10 @@
             "label": "merge_single_file",
             "type": "shell",
             "command": "python",
-            "args": ["merge.py"],
-            "group": "build",
+            "args": ["merge.py", "${file}"],
+            "group": {
+                "kind": "build"
+            },
             "presentation": {
                 "reveal": "always"
             },
