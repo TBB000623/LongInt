@@ -21,7 +21,9 @@
 *.cbp
 
 # IDE文件
-.vscode/
+.vscode/*
+!.vscode/tasks.json
+!.vscode/extensions.json
 .idea/
 *.swp
 *.swo
@@ -36,3 +38,9 @@ Thumbs.db
 build/
 Debug/
 Release/
+
+# OI调试文件
+*.in
+*.out
+*.ans
+submit.cpp
