@@ -1,0 +1,48 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "g++",
+            "args": [
+                "-g",
+                "${file}",
+                "-o",
+                "${fileDirname}\\${fileBasenameNoExtension}.exe"
+            ],
+            "group": {
+                "kind": "build"
+            },
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "build_all",
+            "type": "shell",
+            "command": "g++",
+            "args": [
+                "${workspaceFolder}/*.cpp",
+                "-o",
+                "${fileDirname}\\${fileBasenameNoExtension}.exe"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "merge_single_file",
+            "type": "shell",
+            "command": "python",
+            "args": ["merge.py", "${file}"],
+            "group": {
+                "kind": "build"
+            },
+            "presentation": {
+                "reveal": "always"
+            },
+            "problemMatcher": []
+        }
+    ]
+}
