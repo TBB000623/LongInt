@@ -2,7 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
+            "label": "build_single_file",
             "type": "shell",
             "command": "g++",
             "args": [
@@ -17,18 +17,41 @@
             "problemMatcher": ["$gcc"]
         },
         {
+            "label": "build_LInt",
+            "type": "shell",
+            "command": "g++",
+            "args": [
+                "-g",
+                "${workspaceFolder}/LongInt.cpp",
+                "${workspaceFolder}/LInt.cpp",
+                "-o",
+                "${workspaceFolder}/LongInt.exe"
+            ],
+            "group": {
+                "kind": "build"
+            },
+            "problemMatcher": ["$gcc"]
+        },
+        {
             "label": "build_all",
             "type": "shell",
             "command": "g++",
             "args": [
+                "-g",
                 "${workspaceFolder}/*.cpp",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe"
             ],
             "group": {
-                "kind": "build",
-                "isDefault": false
+                "kind": "build"
             },
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "build_longint",
+            "type": "shell",
+            "command": "mingw32-make",
+            "group": { "kind": "build" },
             "problemMatcher": ["$gcc"]
         },
         {
