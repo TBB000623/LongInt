@@ -21,7 +21,7 @@ using std::cout;
 using std::endl;
 using std::string;
 
-int Log_2(int base) {
+inline int Log_2(int base) {
 	int i;
 	for (i = 0; ((1 << i) < base) && (i < 32); i++);
 	return i;
@@ -167,13 +167,13 @@ struct LInt {
 };
 
 template <typename T = LInt>
-T mul_pow10(const T&, int);
+LInt mul_pow10(const T&, int);
 
 template <typename T = LInt>
 T pow10(int);
 
 template <>
-LInt mul_pow10(const LInt& A, int k) {
+inline LInt mul_pow10<LInt>(const LInt& A, int k) {
 	// return A*10^k
 	if (A.isNaN() || A.zero() || A.isinf()) return A;
 	int t1, divi, res;
@@ -187,10 +187,14 @@ LInt mul_pow10(const LInt& A, int k) {
 	}
 	return (divi >= 0) ? ((A * t1) << divi) : ((A * t1) >> -divi);
 }
-LInt mul_pow10(const int& a, int k) { return mul_pow10(LInt(a), k); }
 
 template <>
-LInt pow10(int k) {
+inline LInt mul_pow10<int>(const int& a, int k) {
+	return mul_pow10(LInt(a), k);
+}
+
+template <>
+inline LInt pow10(int k) {
 	return mul_pow10(1, k);
 }
 }  // namespace tbb

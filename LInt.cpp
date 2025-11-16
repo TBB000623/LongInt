@@ -35,8 +35,8 @@ class complex_expotional {
 	int N = 0;
 
    public:
-	void precompute(int n, int recompute_period = 256);
-	complex operator()(int k, int n = 0) const;
+	void precompute(int, int);
+	complex operator()(int, int) const;
 };
 
 void complex_expotional::precompute(int n, int recompute_period = 256) {
@@ -1074,5 +1074,7 @@ std::istream& operator>>(std::istream& is, LInt& A) {
 	A = in_s;
 	return is;
 }
+
+complex_expotional root_table;
 
 }  // namespace tbb
