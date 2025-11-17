@@ -374,7 +374,7 @@ LInt::LInt(const string& inString_) : LInt(inString_.c_str()) {}
 LInt::LInt(const string& inString_) : num(0) { *this = LInt(inString_.c_str()); }
 #endif
 
-bool LInt::operator<(const LInt& B) const {
+bool LInt::operator<(LInt B) const {
 	const LInt& A = *this;
 	if (A.isNaN() || B.isNaN()) return false;
 	if (A.sign < B.sign) return true;
@@ -394,7 +394,7 @@ bool LInt::operator<(const LInt& B) const {
 	}
 	return false;
 }
-bool LInt::operator==(const LInt& B) const {
+bool LInt::operator==(LInt B) const {
 	const LInt& A = *this;
 	if (A.isNaN() || B.isNaN()) return false;
 	if (A.sign != B.sign) return false;
@@ -668,7 +668,7 @@ LInt LInt::operator-() const {
 }
 
 // bninarry operation
-LInt LInt::operator+(const LInt& B) const {
+LInt LInt::operator+(LInt B) const {
 	const LInt& A = *this;
 	if (A.isNaN() || B.isNaN()) return LInt(false);
 	if (B.sign == 0) return A;
@@ -753,7 +753,7 @@ LInt LInt::operator*(int B) const {
 	ans.sho();
 	return ans;
 }
-LInt LInt::operator*(const LInt& B) const {
+LInt LInt::operator*(LInt B) const {
 	auto _conv_length = [](int n) -> int {
 		// if(n < 1024)	return 1 << Log_2(n);
 		n = (n + 1) / 2;
@@ -832,7 +832,7 @@ LInt LInt::operator/(int B) const {
 	ans.sho();
 	return ans;
 }
-LInt LInt::operator/(const LInt& B) const {
+LInt LInt::operator/(LInt B) const {
 	const LInt& A = *this;
 	if (A.isNaN() || B.isNaN()) return LInt(false);
 	if ((A == 0 && B == 0) || (A.isinf() && B.isinf())) return LInt(false);
@@ -892,7 +892,7 @@ LInt LInt::operator%(int B) const {
 	if (A.sign < 0) rem = -rem;
 	return LInt(rem);
 }
-LInt LInt::operator%(const LInt& B) const {
+LInt LInt::operator%(LInt B) const {
 	const LInt& A = *this;
 	if (A.isNaN() || B.isNaN() || A.isinf() || B == 0) return LInt(false);
 	if (B.isinf()) return B.positive() ? A : -A;
@@ -913,12 +913,12 @@ LInt& LInt::operator>>=(int k) {
 	swap(temp);
 	return *this;
 }
-LInt& LInt::operator+=(const LInt& B) {
+LInt& LInt::operator+=(LInt B) {
 	LInt temp = *this + B;
 	swap(temp);
 	return *this;
 }
-LInt& LInt::operator-=(const LInt& B) {
+LInt& LInt::operator-=(LInt B) {
 	LInt temp = *this - B;
 	swap(temp);
 	return *this;
@@ -928,7 +928,7 @@ LInt& LInt::operator*=(int p) {
 	swap(temp);
 	return *this;
 }
-LInt& LInt::operator*=(const LInt& B) {
+LInt& LInt::operator*=(LInt B) {
 	LInt temp = *this * B;
 	swap(temp);
 	return *this;
@@ -938,7 +938,7 @@ LInt& LInt::operator/=(int p) {
 	swap(temp);
 	return *this;
 }
-LInt& LInt::operator/=(const LInt& B) {
+LInt& LInt::operator/=(LInt B) {
 	LInt temp = *this / B;
 	swap(temp);
 	return *this;
@@ -948,7 +948,7 @@ LInt& LInt::operator%=(int B) {
 	swap(temp);
 	return *this;
 }
-LInt& LInt::operator%=(const LInt& B) {
+LInt& LInt::operator%=(LInt B) {
 	LInt temp = *this % B;
 	swap(temp);
 	return *this;

@@ -54,21 +54,21 @@ struct LInt {
 	LInt(const string& inString_);
 
 	// compare operator
-	bool operator<(const LInt& B) const;
-	bool operator==(const LInt& B) const;
-	bool operator>(const LInt& B) const {
+	bool operator<(LInt B) const;
+	bool operator==(LInt B) const;
+	bool operator>(LInt B) const {
 		const LInt& A = *this;
 		return (A.isNaN() || B.isNaN()) ? false : B < A;
 	}
-	bool operator!=(const LInt& B) const {
+	bool operator!=(LInt B) const {
 		const LInt& A = *this;
 		return (A.isNaN() || B.isNaN()) ? false : !(A == B);
 	}
-	bool operator>=(const LInt& B) const {
+	bool operator>=(LInt B) const {
 		const LInt& A = *this;
 		return (A.isNaN() || B.isNaN()) ? false : !(A < B);
 	}
-	bool operator<=(const LInt& B) const {
+	bool operator<=(LInt B) const {
 		const LInt& A = *this;
 		return (A.isNaN() || B.isNaN()) ? false : !(A > B);
 	}
@@ -106,25 +106,25 @@ struct LInt {
 	LInt operator<<(int k) const;
 	LInt operator>>(int k) const;
 	LInt operator-() const;
-	LInt operator+(const LInt& B) const;
-	LInt operator-(const LInt& B) const { return *this + (-B); }
+	LInt operator+(LInt B) const;
+	LInt operator-(LInt B) const { return *this + (-B); }
 	LInt operator*(int B) const;
-	LInt operator*(const LInt& B) const;
+	LInt operator*(LInt B) const;
 	LInt operator/(int B) const;
-	LInt operator/(const LInt& B) const;
+	LInt operator/(LInt B) const;
 	LInt operator%(int B) const;
-	LInt operator%(const LInt& B) const;
+	LInt operator%(LInt B) const;
 
 	LInt& operator<<=(int k);
 	LInt& operator>>=(int k);
-	LInt& operator+=(const LInt& B);
-	LInt& operator-=(const LInt& B);
+	LInt& operator+=(LInt B);
+	LInt& operator-=(LInt B);
 	LInt& operator*=(int p);
-	LInt& operator*=(const LInt& B);
+	LInt& operator*=(LInt B);
 	LInt& operator/=(int p);
-	LInt& operator/=(const LInt& B);
+	LInt& operator/=(LInt B);
 	LInt& operator%=(int B);
-	LInt& operator%=(const LInt& B);
+	LInt& operator%=(LInt B);
 
 	inline LInt& operator++(void) { return *this += 1; }
 	inline LInt operator++(int) {
@@ -148,9 +148,9 @@ struct LInt {
 		 */
 	}
 	// Friend Function for Other Classical Class
-	friend LInt operator+(int A, const LInt& B) { return B + LInt(A); }
-	friend LInt operator-(int A, const LInt& B) { return -B + LInt(A); }
-	friend LInt operator*(int A, const LInt& B) { return B * A; }
+	friend LInt operator+(int A, LInt B) { return B + LInt(A); }
+	friend LInt operator-(int A, LInt B) { return -B + LInt(A); }
+	friend LInt operator*(int A, LInt B) { return B * A; }
 	friend std::ostream& operator<<(std::ostream& os, const LInt& A);
 	friend std::istream& operator>>(std::istream& is, LInt& A);
 	friend void swap(LInt& A, LInt& B) { A.swap(B); }
