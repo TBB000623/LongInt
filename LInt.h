@@ -138,15 +138,8 @@ struct LInt {
 		*this -= 1;
 		return b;
 	}
-	inline u32& operator[](int k) {
-		static u32 wrong = 0;
-		if (zero()) return wrong = 0;
-		return num[k];
-		/* When *this=0 here should throw an exception, because there
-		 * isn't any list to return. But for a better experience, I just
-		 * return a static variable.
-		 */
-	}
+	inline u32& operator[](int k) { return num[k]; }
+	inline const u32& operator[](int k) const { return num[k]; }
 	// Friend Function for Other Classical Class
 	friend LInt operator+(int A, LInt B) { return B + LInt(A); }
 	friend LInt operator-(int A, LInt B) { return -B + LInt(A); }
