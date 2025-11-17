@@ -904,112 +904,53 @@ LInt LInt::operator%(const LInt& B) const {
 LInt& LInt::operator<<=(int k) {
 	if (k == 0) return *this;
 	LInt temp = *this << k;
-#if __cplusplus >= 201103L
-	num = std::move(temp.num);
-#else
-	num.swap(temp.num);
-#endif
-	d = temp.d;
-	sign = temp.sign;
+	swap(temp);
 	return *this;
 }
 LInt& LInt::operator>>=(int k) {
+	if (k == 0) return *this;
 	LInt temp = *this >> k;
-#if __cplusplus >= 201103L
-	num = std::move(temp.num);
-#else
-	num.swap(temp.num);
-#endif
-	d = temp.d;
-	sign = temp.sign;
+	swap(temp);
 	return *this;
 }
 LInt& LInt::operator+=(const LInt& B) {
 	LInt temp = *this + B;
-#if __cplusplus >= 201103L
-	num = std::move(temp.num);
-#else
-	num.swap(temp.num);
-#endif
-	d = temp.d;
-	sign = temp.sign;
+	swap(temp);
 	return *this;
 }
 LInt& LInt::operator-=(const LInt& B) {
 	LInt temp = *this - B;
-#if __cplusplus >= 201103L
-	num = std::move(temp.num);
-#else
-	num.swap(temp.num);
-#endif
-	d = temp.d;
-	sign = temp.sign;
+	swap(temp);
 	return *this;
 }
 LInt& LInt::operator*=(int p) {
 	LInt temp = *this * p;
-#if __cplusplus >= 201103L
-	num = std::move(temp.num);
-#else
-	num.swap(temp.num);
-#endif
-	d = temp.d;
-	sign = temp.sign;
+	swap(temp);
 	return *this;
 }
 LInt& LInt::operator*=(const LInt& B) {
 	LInt temp = *this * B;
-#if __cplusplus >= 201103L
-	num = std::move(temp.num);
-#else
-	num.swap(temp.num);
-#endif
-	d = temp.d;
-	sign = temp.sign;
+	swap(temp);
 	return *this;
 }
 LInt& LInt::operator/=(int p) {
 	LInt temp = *this / p;
-#if __cplusplus >= 201103L
-	num = std::move(temp.num);
-#else
-	num.swap(temp.num);
-#endif
-	d = temp.d;
-	sign = temp.sign;
+	swap(temp);
 	return *this;
 }
 LInt& LInt::operator/=(const LInt& B) {
 	LInt temp = *this / B;
-#if __cplusplus >= 201103L
-	num = std::move(temp.num);
-#else
-	num.swap(temp.num);
-#endif
-	d = temp.d;
-	sign = temp.sign;
+	swap(temp);
 	return *this;
 }
 LInt& LInt::operator%=(int B) {
 	LInt temp = *this % B;
-#if __cplusplus >= 201103L
-	num = std::move(temp.num);
-#else
-	num.swap(temp.num);
-#endif
-	d = temp.d;
-	sign = temp.sign;
+	swap(temp);
 	return *this;
 }
 LInt& LInt::operator%=(const LInt& B) {
 	LInt temp = *this % B;
-#if __cplusplus >= 201103L
-	num = std::move(temp.num);
-#else
-	num.swap(temp.num);
-#endif
-	d = temp.d;
-	sign = temp.sign;
+	swap(temp);
 	return *this;
 }
 

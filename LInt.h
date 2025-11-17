@@ -88,7 +88,7 @@ struct LInt {
 	bool zero() const { return !num.empty() && sign == 0; }
 	bool meanless() const { return isNaN() || isinf(); }
 	bool abnormal() const { return zero() || isinf() || isNaN(); }
-	void swap(LInt& other) {
+	void swap(LInt& other) noexcept {
 		std::swap(sign, other.sign);
 		std::swap(d, other.d);
 		std::swap(num, other.num);
