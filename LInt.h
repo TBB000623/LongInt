@@ -149,7 +149,7 @@ struct LInt {
 	friend void swap(LInt& A, LInt& B) { A.swap(B); }
 #if __cplusplus >= 201103L
 	// converse to other classical type
-	explicit operator bool() const { return isinf() || isNaN(); }
+	explicit operator bool() const { return !(zero() || isNaN()); }
 	explicit operator int() const {
 		int temp = 0;
 		for (int i = 0; i < d; i++) temp = temp * 10000 + num[i];
