@@ -3,7 +3,6 @@ import sys
 import os
 import re
 
-# VSCode 通过 args 传来的当前活动文件
 if len(sys.argv) < 2:
     print("Usage: python merge.py <entry_file>")
     exit(1)
@@ -18,8 +17,14 @@ included = set()
 include_regex = re.compile(r'^\s*#\s*include\s*"([^"]+)"')
 
 def expand_file(path, out):
+    # 标准化路径
+    path = os.path.normpath(path)
     if path in included:
         return
+    if not os.path.exists(path):
+        print(f"Warning: {path} not found, skipped.")
+        return
+
     included.add(path)
 
     out.write(f"\n// ===== Begin {path} =====\n")
@@ -28,10 +33,21 @@ def expand_file(path, out):
         for line in f:
             m = include_regex.match(line)
             if m:
-                header = m.group(1)
-                if os.path.exists(header):
-                    expand_file(header, out)
+                header_name = m.group(1)
+                header_path = os.path.join(os.path.dirname(path), header_name)
+
+                # 展开头文件
+                if os.path.exists(header_path):
+                    expand_file(header_path, out)
+
+                    # 如果是 .h 或 .hpp，尝试包含对应的 .cpp
+                    ext = os.path.splitext(header_name)[1].lower()
+                    if ext in (".h", ".hpp"):
+                        impl_path = os.path.splitext(header_path)[0] + ".cpp"
+                        if os.path.exists(impl_path):
+                            expand_file(impl_path, out)
                 continue
+
             out.write(line)
 
     out.write(f"// ===== End {path} =====\n")
