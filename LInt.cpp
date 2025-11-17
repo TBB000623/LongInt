@@ -202,7 +202,7 @@ void circ_conv(const std::vector<double>& A, const std::vector<double>& B, std::
 		for (register int t = 0; t < n; ++t) {
 			C[t] = 0;
 			for (int i = 0; i <= t; ++i) C[t] += A[i] * B[t - i];
-			for (int i = n - 1; i >= t + 1; ++i) C[t] += A[i] * B[n + t - i];
+			for (int i = n - 1; i >= t + 1; --i) C[t] += A[i] * B[n + t - i];
 		}
 		return;
 	}
@@ -843,7 +843,7 @@ LInt LInt::operator/(const LInt& B) const {
 	if (A.d < 25) {
 		LInt mid;
 		LInt high = LInt(1) << (A.d - B.d + 1);
-		LInt low = LInt(1) << (A.d - B.d - 1);
+		LInt low = LInt(1) << ((A.d - B.d - 1) < 0 ? 0 : (A.d - B.d - 1));
 		LInt abs_A = A.abs(), abs_B = B.abs();
 		if (abs_A < abs_B) return 0;
 		while (1) {
