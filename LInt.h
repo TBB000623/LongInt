@@ -105,6 +105,7 @@ struct LInt {
 	// Operator Function
 	LInt operator<<(int k) const;
 	LInt operator>>(int k) const;
+	LInt operator+() const { return *this; }
 	LInt operator-() const;
 	LInt operator+(LInt B) const;
 	LInt operator-(LInt B) const { return *this + (-B); }
