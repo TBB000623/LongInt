@@ -579,6 +579,7 @@ void LInt::show(std::ostream& os = std::cout) const {
 	os << "=========================" << endl;
 }
 int LInt::digit() const {
+	if (isNaN()) return -2;
 	if (isinf()) return -1;
 	if (zero()) return 0;
 
@@ -591,14 +592,14 @@ int LInt::digit() const {
 // get 10000^2d/A while A >=0
 LInt LInt::recip() const {
 	LInt A(*this);
-	if (A.sign < 0) {
+	if (A.isNaN() || A.negative()) {
 		return LInt(false);
 	}
-	if (A.sign == 2) {
-		return LInt(0);
+	if (A.zero()) {
+		return LInt(false, 2);
 	}
-	if (A.sign == 0) {
-		return LInt("inf");
+	if (A.positive() && A.isinf()) {
+		return 0;
 	}
 	if (A.d <= 2) {
 		u64 a = 0, div = 0;
