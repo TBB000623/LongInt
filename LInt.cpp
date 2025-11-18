@@ -540,7 +540,10 @@ void LInt::show(std::ostream& os = std::cout) const {
 		const int idxWidth = 6;  // 索引宽度
 
 		int printCount = d;
-		if (d >= 100) printCount = int(std::ceil(::sqrt((double)d) / cols)) * cols;  // 前后摘要长度
+		if (d >= 100) {
+			printCount = int(std::ceil(std::sqrt((double)d) / cols)) * cols;
+			if (printCount > d) printCount = d;
+		}  // 前后摘要长度
 
 		// 先输出高位（从 d-1 向下）
 		int printed = 0;
