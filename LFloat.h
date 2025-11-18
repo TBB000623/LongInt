@@ -1,6 +1,10 @@
 #ifndef TBBLFLT_H  // LFloat.h ver 3.4.1
 #define TBBLFLT_H
 
+#ifndef TBBLINT_H
+#include "LInt.h"
+#endif
+
 #ifdef TBBLINT_H
 #include <climits>
 #include <sstream>
