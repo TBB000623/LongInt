@@ -257,7 +257,7 @@ void circ_conv(const std::vector<double>& A, const std::vector<double>& B, std::
 }
 
 // LInt
-LInt::LInt(bool b, int code = 0) : sign(0), d(0), num() {
+LInt::LInt(bool b, int code) : sign(0), d(0), num() {
 	if (b == false) {
 		if (code > 0) sign = 2;
 		if (code < 0) sign = -2;
