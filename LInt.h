@@ -43,7 +43,7 @@ struct LInt {
 	std::vector<u32> num;
 	// define function/ initial
 	LInt() : sign(0), d(0), num() {}
-	LInt(bool, int);
+	LInt(bool, int = 0);
 	LInt(int);
 	LInt(i64);
 	LInt(u64);
