@@ -259,6 +259,7 @@ void circ_conv(const std::vector<double>& A, const std::vector<double>& B, std::
 
 // LInt
 LInt::LInt(bool b, int code) : sign(0), d(0), num() {
+	// std::cerr << "Called LInt(bool, int)" << std::endl;  // 调试输出
 	if (b == false) {
 		if (code > 0) sign = 2;
 		if (code < 0) sign = -2;
@@ -268,6 +269,7 @@ LInt::LInt(bool b, int code) : sign(0), d(0), num() {
 }
 
 LInt::LInt(int b) : sign(0), num(1, 0) {
+	// std::cerr << "Called LInt(int)" << std::endl;  // 调试输出
 	i64 ub = b;
 	if (b == 0) {
 		d = 0;
@@ -286,6 +288,7 @@ LInt::LInt(int b) : sign(0), num(1, 0) {
 	}
 }
 LInt::LInt(i64 b) : sign(0), num(1, 0) {
+	// std::cerr << "Called LInt(i64)" << std::endl;  // 调试输出
 	if (b == 0) {
 		d = 0;
 		return;
@@ -306,6 +309,7 @@ LInt::LInt(i64 b) : sign(0), num(1, 0) {
 	}
 }
 LInt::LInt(u64 b) : num(1, 0) {
+	// std::cerr << "Called LInt(u64)" << std::endl;  // 调试输出
 	if (b == 0) {
 		sign = d = 0;
 		return;
