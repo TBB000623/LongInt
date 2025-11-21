@@ -33,7 +33,7 @@ struct complex;
 class complex_expotional;
 extern complex_expotional root_table;
 
-void DFT(const std::vector<complex>&, std::vector<complex>&, int, bool inv);
+void DFT(const std::vector<complex>&, std::vector<complex>&, int, bool inv = false);
 void circ_conv(const std::vector<double>&, const std::vector<double>&, std::vector<double>&, int);
 
 struct LInt {
@@ -79,7 +79,7 @@ struct LInt {
 
 	void print() const;
 	string print_str() const;
-	void show(std::ostream&) const;
+	void show(std::ostream& = std::cout) const;
 	int digit() const;
 	bool isNaN() const { return num.empty() && d == 0 && sign == 0; }
 	bool positive() const { return sign > 0; }

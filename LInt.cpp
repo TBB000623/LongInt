@@ -36,11 +36,11 @@ class complex_expotional {
 	int N = 0;
 
    public:
-	void precompute(int, int);
-	complex operator()(int, int) const;
+	void precompute(int, int recompute_period = 256);
+	complex operator()(int, int n = 0) const;
 };
 
-void complex_expotional::precompute(int n, int recompute_period = 256) {
+void complex_expotional::precompute(int n, int recompute_period) {
 	if (n <= 0) {
 		table.clear();
 		N = 0;
@@ -73,7 +73,7 @@ void complex_expotional::precompute(int n, int recompute_period = 256) {
 	}
 }
 
-complex complex_expotional::operator()(int k, int n = 0) const {
+complex complex_expotional::operator()(int k, int n) const {
 	if (n == 0) {
 		if (N <= 0) {
 			return tbb::complex{1, 0};
@@ -97,7 +97,7 @@ complex complex_expotional::operator()(int k, int n = 0) const {
 
 // DFT and circular conversion
 
-void DFT(const std::vector<complex>& A, std::vector<complex>& a, int n, bool inv = false) {
+void DFT(const std::vector<complex>& A, std::vector<complex>& a, int n, bool inv) {
 	using std::vector;
 	if (n <= 0) return;
 	if (n == 1) {
@@ -481,7 +481,7 @@ string LInt::print_str() const {
 	}
 	return ans;
 }
-void LInt::show(std::ostream& os = std::cout) const {
+void LInt::show(std::ostream& os) const {
 	using std::endl;
 	using std::left;
 	using std::right;
