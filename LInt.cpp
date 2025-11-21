@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstring>
 
+#include "LInt_utils.hpp"
 namespace tbb {
 
 // complex and complex-precompute
@@ -441,37 +442,6 @@ void LInt::sho() {
 	return;
 }
 void LInt::print() const {
-#if __cplusplus >= 201103L
-	auto fast_out = [](u64 a) -> void {
-		if (a == 0) {
-			putchar('0');
-			return;
-		}
-		char buf[20];
-		int idx = 0;
-		while (a > 0) {
-			buf[idx++] = char('0' + (a % 10));
-			a /= 10;
-		}
-		for (int i = idx - 1; i >= 0; --i) putchar(buf[i]);
-	};
-#else
-	struct {
-		void operator()(u64 a) const {
-			if (a == 0) {
-				putchar('0');
-				return;
-			}
-			char buf[20];
-			int idx = 0;
-			while (a > 0) {
-				buf[idx++] = char('0' + (a % 10));
-				a /= 10;
-			}
-			for (int i = idx - 1; i >= 0; --i) putchar(buf[i]);
-		}
-	} fast_out;
-#endif
 	if (sign == 2 || sign == -2) {
 		if (sign == -2) putchar('-');
 		printf("inf");
@@ -497,29 +467,13 @@ string LInt::print_str() const {
 	string ans;
 	if (sign == -1) ans += '-';
 
-	auto i2s = [](int L, char* dest = 0) -> const char* {  // converse int to classical C-style string and return it
-		static char temp[20];
-		if (dest == 0) dest = temp;
-		if (L == 0) {
-			dest[0] = '0', dest[1] = '\0';
-			return dest;
-		}
-		char* org = dest;
-		if (L < 0) dest[0] = '-', dest++, L = -L;
-		u32 t = 1;
-		while (t <= unsigned(L)) t *= 10;
-		while (t != 1) t /= 10, *(dest++) = '0' + (L / t), L %= t;
-		*dest = '\0';
-		return org;
-	};
-
-	ans += i2s(num[d - 1]);
+	ans += u32_to_str(num[d - 1]);
 	ans.reserve(ans.size() + 4 * d);
 	for (int i = d - 2; i >= 0; i--) {
 		if (num[i] < 10) ans += '0';
 		if (num[i] < 100) ans += '0';
 		if (num[i] < 1000) ans += '0';
-		ans += i2s(num[i]);
+		ans += u32_to_str(num[i]);
 	}
 	return ans;
 }
@@ -534,6 +488,8 @@ void LInt::show(std::ostream& os = std::cout) const {
 	os << left << setw(10) << "Address:" << static_cast<const void*>(this) << endl;
 	os << left << setw(10) << "Sign:" << (sign > 0 ? '+' : (sign < 0 ? '-' : '0')) << endl;
 	os << left << setw(10) << "Size:" << d << " (blocks)" << endl;
+	os << left << setw(10) << "num size:" << num.size() << " (blocks)" << endl;
+	os << left << setw(10) << "Digits:" << digit() << " (decimal digits)" << endl;
 
 	if (d > 0) {
 		os << left << setw(10) << "Detail:" << endl;

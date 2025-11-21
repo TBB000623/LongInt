@@ -5,20 +5,13 @@
 #include <sstream>
 
 #include "LInt.h"
+#include "LInt_utils.hpp"
 
 namespace tbb {
 
 // global variables
 int _LFloat_prec = 2000;
 const LFloat _LFloat_nan;
-void Fast_out(int);
-void Fast_0_out(int);
-void Fast_0_out(int, int);
-int s2i(const char*, const char*);
-string i2s(int);
-string Fast_0_out_str(int);
-string Fast_0_out_str(int, int);
-const char* Fast_0_out_char(int, int, int);
 
 // construction
 LFloat::LFloat(void) : base(), pow(0) {}
@@ -79,7 +72,7 @@ LFloat::LFloat(const char* inString) : base(false), pow(0) {
 	len = strlen(inString);
 	if (!scientific) sci_pt = len;
 	if (!dot) dot_pt = sci_pt;
-	if (scientific) exp = s2i(inS + sci_pt + 1, inS + len);
+	exp = (scientific) ? atoi(inS + sci_pt + 1) : 0;
 	if (sign == 0) sign = '+';
 	string s0(1, sign), s1(inS, dot_pt);
 	if (dot) s1 += string(inS + dot_pt + 1, sci_pt - dot_pt - 1);
@@ -139,27 +132,21 @@ void LFloat::print(void) const {
 	}
 	if (base.negative()) putchar('-');
 	if (pow >= 0) {  // 1234.p4= 1.234e19
-		Fast_out(base[dgt - 1]);
-		for (int i = dgt - 2; i >= 0; i--) Fast_0_out(base[i]);
-		for (int i = 0; i < pow; i++) printf("0000");
+		fast_out(base[dgt - 1]);
+		for (int i = dgt - 2; i >= 0; i--) fast_0_out(base[i]);
+		for (int i = 0; i < pow; i++) fputs("0000", stdout);
 	} else if (-pow < dgt) {  // 2563 1740 p-1= 2563.174
-		Fast_out(base[dgt - 1]);
-		for (int i = dgt - 2; i >= -pow; i--) Fast_0_out(base[i]);
+		fast_out(base[dgt - 1]);
+		for (int i = dgt - 2; i >= -pow; i--) fast_0_out(base[i]);
 		putchar('.');
-		for (int i = -pow - 1; i > 0; i--) Fast_0_out(base[i]);
-		if (base[0] % 1000 == 0) Fast_0_out(base[0] / 1000, 1);
-		else if (base[0] % 100 == 0) Fast_0_out(base[0] / 100, 2);
-		else if (base[0] % 10 == 0) Fast_0_out(base[0] / 10, 3);
-		else Fast_0_out(base[0]);
+		for (int i = -pow - 1; i > 0; i--) fast_0_out(base[i]);
+		fast_0_out(base[0], true);
 	} else {
 		putchar('0');
 		putchar('.');
 		for (int i = 0; i < -pow - dgt; i++) printf("0000");
-		for (int i = dgt - 1; i > 0; i--) Fast_0_out(base[i]);
-		if (base[0] % 1000 == 0) Fast_0_out(base[0] / 1000, 1);
-		else if (base[0] % 100 == 0) Fast_0_out(base[0] / 100, 2);
-		else if (base[0] % 10 == 0) Fast_0_out(base[0] / 10, 3);
-		else Fast_0_out(base[0]);
+		for (int i = dgt - 1; i > 0; i--) fast_0_out(base[i]);
+		fast_0_out(base[0], true);
 	}
 }
 const string LFloat::print_str(void) const {
@@ -168,28 +155,23 @@ const string LFloat::print_str(void) const {
 		return base.print_str();
 	}
 	string ans;
+	ans.reserve(4 * dgt + 10);
 	if (base.negative()) ans += '-';
 	if (pow >= 0) {
-		ans += i2s(base[dgt - 1]);
-		for (int i = dgt - 2; i >= 0; i--) ans += Fast_0_out_str(base[i]);
+		ans += u32_to_str(base[dgt - 1]);
+		for (int i = dgt - 2; i >= 0; i--) ans += fast_0_out_str(base[i]);
 		for (int i = 0; i < pow; i++) ans += "0000";
 	} else if (-pow < dgt) {  // 2563 1740 p-1= 2563.174
-		ans += i2s(base[dgt - 1]);
-		for (int i = dgt - 2; i >= -pow; i--) ans += Fast_0_out_str(base[i]);
+		ans += u32_to_str(base[dgt - 1]);
+		for (int i = dgt - 2; i >= -pow; i--) ans += fast_0_out_str(base[i]);
 		ans += '.';
-		for (int i = -pow - 1; i > 0; i--) ans += Fast_0_out_str(base[i]);
-		if (base[0] % 1000 == 0) ans += Fast_0_out_str(base[0] / 1000, 1);
-		else if (base[0] % 100 == 0) ans += Fast_0_out_str(base[0] / 100, 2);
-		else if (base[0] % 10 == 0) ans += Fast_0_out_str(base[0] / 10, 3);
-		else ans += Fast_0_out_str(base[0]);
+		for (int i = -pow - 1; i > 0; i--) ans += fast_0_out_str(base[i]);
+		ans += fast_0_out_str(base[0], true);
 	} else {
 		ans += "0.";
 		for (int i = 0; i < -pow - dgt; i++) ans += "0000";
-		for (int i = dgt - 1; i > 0; i--) ans += Fast_0_out_str(base[i]);
-		if (base[0] % 1000 == 0) ans += Fast_0_out_str(base[0] / 1000, 1);
-		else if (base[0] % 100 == 0) ans += Fast_0_out_str(base[0] / 100, 2);
-		else if (base[0] % 10 == 0) ans += Fast_0_out_str(base[0] / 10, 3);
-		else ans += Fast_0_out_str(base[0]);
+		for (int i = dgt - 1; i > 0; i--) ans += fast_0_out_str(base[i]);
+		ans += fast_0_out_str(base[0], true);
 	}
 	return ans;
 }
@@ -386,7 +368,9 @@ std::ostream& operator<<(std::ostream& os, const tbb::LFloat& A) {
 		os.put('e');
 		int e_power = 4 * B.pow + power_d + p;
 		os.put(e_power >= 0 ? '+' : '-');
-		os << tbb::Fast_0_out_char(std::abs(e_power), 0, 3);
+		auto old_fill = os.fill('0');
+		os << std::setw(3) << std::abs(e_power);
+		os.fill(old_fill);
 		return os;
 	} else {  // default mode
 		os << B.print_str();
