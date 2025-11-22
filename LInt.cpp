@@ -944,41 +944,52 @@ std::ostream& operator<<(std::ostream& os, const LInt& A) {
 std::istream& operator>>(std::istream& is, LInt& A) {
 	using std::isdigit;
 	is >> std::ws;
-	{
-		if (is.peek() == -1) {
-			is.setstate(std::ios_base::eofbit);
-			A = 0;
-			return is;
-		}
-		if (!is) {
-			is.setstate(std::ios_base::failbit);
-			A = 0;
-			return is;
-		}
-		char t = is.peek();
-		while (t != '-' && !isdigit(t) && t != -1) {
-			is.get();
-			t = is.peek();
-		}
-		if (t == -1) {
-			is.setstate(std::ios_base::failbit);
-			A = 0;
-			return is;
-		}
+	if (!is) {
+		is.setstate(std::ios_base::failbit);
+		A = 0;
+		return is;
 	}
-	char sign = is.peek();
-	if (sign == '-' || sign == '+') is.get();
-	else sign = '0';
-	// standard input for integer does not accept NaN and Inf
-	if (!isdigit(is.peek())) {
-		if (sign == '+' || sign == '-') is.unget();
+
+	typedef std::istream::int_type int_type;
+	const int_type EOF_CHAR = std::char_traits<char>::eof();
+
+	int_type p = is.peek();
+	if (p == EOF_CHAR) {
+		is.setstate(std::ios_base::eofbit);
+		A = 0;
+		return is;
+	}
+
+	// set failbit if we havn't found a '+'/'-' or a digit or EOF
+	if (p != EOF_CHAR && p != '+' && p != '-' && !isdigit(static_cast<unsigned char>(p))) {
+		is.setstate(std::ios_base::failbit);
+		A = 0;
+		return is;
+	}
+
+	bool hasSign = false;
+	char signChar = 0;
+	if (p == '+' || p == '-') {
+		hasSign = true;
+		signChar = static_cast<char>(is.get());  // consume sign
+		p = is.peek();
+	}
+
+	// After optional sign we must have at least one digit
+	// and consume sign character
+	if (p == EOF_CHAR || !isdigit(static_cast<unsigned char>(p))) {
 		A = 0;
 		is.setstate(std::ios_base::failbit);
 		return is;
 	}
-	string in_s(1, sign);
-	while (isdigit(is.peek())) in_s += is.get();
-	A = in_s;
+
+	// Build the numeric string: include sign only if present
+	string in_s;
+	if (hasSign) in_s.push_back(signChar);
+	while ((p = is.peek()) != EOF_CHAR && is && isdigit(static_cast<unsigned char>(p))) {
+		in_s.push_back(static_cast<char>(is.get()));
+	}
+	A = LInt(in_s);
 	return is;
 }
 
