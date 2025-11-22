@@ -44,6 +44,7 @@ inline std::string fast_0_out_str(u32 a, bool strip_trailing_zeros = false) {
 	if (a < 1000u) leading_zeros++;
 	if (a < 100u) leading_zeros++;
 	if (a < 10u) leading_zeros++;
+	if (a < 1u) leading_zeros++;
 	return std::string(leading_zeros, '0') + u32_to_str(a, strip_trailing_zeros);
 }
 
@@ -54,7 +55,7 @@ inline std::string u32_to_str(u32 a, bool strip_trailing_zeros /*= false*/) {
 	if (strip_trailing_zeros && a == 0) {
 		return std::string();
 	}
-	if (strip_trailing_zeros && a == 0) {
+	if (!strip_trailing_zeros && a == 0) {
 		return "0";
 	}
 	if (strip_trailing_zeros && a != 0) {
