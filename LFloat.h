@@ -20,7 +20,7 @@ struct LFloat {
 	int pow;
 	// define function
 	LFloat(void);
-	LFloat(bool b);
+	LFloat(bool, int = 0);
 	LFloat(int);
 	LFloat(i64);
 	LFloat(u64);

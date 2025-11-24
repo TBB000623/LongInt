@@ -15,7 +15,7 @@ const LFloat _LFloat_nan;
 
 // construction
 LFloat::LFloat(void) : base(), pow(0) {}
-LFloat::LFloat(bool b) : base(b), pow(0) {}
+LFloat::LFloat(bool b, int code) : base(b, code), pow(0) {}
 LFloat::LFloat(int i) : base(i), pow(0) {
 	int zero = 0;
 	for (zero = 0; zero < base.d && base.num[zero] == 0; zero++);
