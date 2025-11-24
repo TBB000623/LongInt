@@ -144,7 +144,7 @@ void LFloat::print(void) const {
 	} else {
 		putchar('0');
 		putchar('.');
-		for (int i = 0; i < -pow - dgt; i++) printf("0000");
+		for (int i = 0; i < -pow - dgt; i++) fputs("0000", stdout);
 		for (int i = dgt - 1; i > 0; i--) fast_output_with_padding(base[i]);
 		fast_output_with_padding(base[0], true);
 	}

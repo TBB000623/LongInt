@@ -448,11 +448,11 @@ void LInt::sho() {
 void LInt::print() const {
 	if (sign == 2 || sign == -2) {
 		if (sign == -2) putchar('-');
-		printf("inf");
+		fputs("inf", stdout);
 		return;
 	}
 	if (sign == 0) {
-		if (num.empty()) printf("NaN");
+		if (num.empty()) fputs("NaN", stdout);
 		else putchar('0');
 		return;
 	}
