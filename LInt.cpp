@@ -457,13 +457,8 @@ void LInt::print() const {
 		return;
 	}
 	if (sign == -1) putchar('-');
-	fast_out(num[d - 1]);
-	for (int i = d - 2; i >= 0; i--) {
-		if (num[i] < 1000) putchar('0');
-		if (num[i] < 100) putchar('0');
-		if (num[i] < 10) putchar('0');
-		fast_out(num[i]);
-	}
+	fast_output(num[d - 1]);
+	for (int i = d - 2; i >= 0; i--) fast_output_with_padding(num[i]);
 }
 string LInt::print_str() const {
 	if (sign == 0) return num.empty() ? string("NaN") : string("0");
@@ -471,14 +466,9 @@ string LInt::print_str() const {
 	string ans;
 	if (sign == -1) ans += '-';
 
-	ans += u32_to_str(num[d - 1]);
 	ans.reserve(ans.size() + 4 * d);
-	for (int i = d - 2; i >= 0; i--) {
-		if (num[i] < 10) ans += '0';
-		if (num[i] < 100) ans += '0';
-		if (num[i] < 1000) ans += '0';
-		ans += u32_to_str(num[i]);
-	}
+	ans += u32_to_str(num[d - 1]);
+	for (int i = d - 2; i >= 0; i--) ans += u32_to_zero_padded_string(num[i]);
 	return ans;
 }
 void LInt::show(std::ostream& os) const {

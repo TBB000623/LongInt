@@ -132,21 +132,21 @@ void LFloat::print(void) const {
 	}
 	if (base.negative()) putchar('-');
 	if (pow >= 0) {  // 1234.p4= 1.234e19
-		fast_out(base[dgt - 1]);
-		for (int i = dgt - 2; i >= 0; i--) fast_0_out(base[i]);
+		fast_output(base[dgt - 1]);
+		for (int i = dgt - 2; i >= 0; i--) fast_output_with_padding(base[i]);
 		for (int i = 0; i < pow; i++) fputs("0000", stdout);
 	} else if (-pow < dgt) {  // 2563 1740 p-1= 2563.174
-		fast_out(base[dgt - 1]);
-		for (int i = dgt - 2; i >= -pow; i--) fast_0_out(base[i]);
+		fast_output(base[dgt - 1]);
+		for (int i = dgt - 2; i >= -pow; i--) fast_output_with_padding(base[i]);
 		putchar('.');
-		for (int i = -pow - 1; i > 0; i--) fast_0_out(base[i]);
-		fast_0_out(base[0], true);
+		for (int i = -pow - 1; i > 0; i--) fast_output_with_padding(base[i]);
+		fast_output_with_padding(base[0], true);
 	} else {
 		putchar('0');
 		putchar('.');
 		for (int i = 0; i < -pow - dgt; i++) printf("0000");
-		for (int i = dgt - 1; i > 0; i--) fast_0_out(base[i]);
-		fast_0_out(base[0], true);
+		for (int i = dgt - 1; i > 0; i--) fast_output_with_padding(base[i]);
+		fast_output_with_padding(base[0], true);
 	}
 }
 const string LFloat::print_str(void) const {
@@ -159,19 +159,19 @@ const string LFloat::print_str(void) const {
 	if (base.negative()) ans += '-';
 	if (pow >= 0) {
 		ans += u32_to_str(base[dgt - 1]);
-		for (int i = dgt - 2; i >= 0; i--) ans += fast_0_out_str(base[i]);
+		for (int i = dgt - 2; i >= 0; i--) ans += u32_to_zero_padded_string(base[i]);
 		for (int i = 0; i < pow; i++) ans += "0000";
 	} else if (-pow < dgt) {  // 2563 1740 p-1= 2563.174
 		ans += u32_to_str(base[dgt - 1]);
-		for (int i = dgt - 2; i >= -pow; i--) ans += fast_0_out_str(base[i]);
+		for (int i = dgt - 2; i >= -pow; i--) ans += u32_to_zero_padded_string(base[i]);
 		ans += '.';
-		for (int i = -pow - 1; i > 0; i--) ans += fast_0_out_str(base[i]);
-		ans += fast_0_out_str(base[0], true);
+		for (int i = -pow - 1; i > 0; i--) ans += u32_to_zero_padded_string(base[i]);
+		ans += u32_to_zero_padded_string(base[0], true);
 	} else {
 		ans += "0.";
 		for (int i = 0; i < -pow - dgt; i++) ans += "0000";
-		for (int i = dgt - 1; i > 0; i--) ans += fast_0_out_str(base[i]);
-		ans += fast_0_out_str(base[0], true);
+		for (int i = dgt - 1; i > 0; i--) ans += u32_to_zero_padded_string(base[i]);
+		ans += u32_to_zero_padded_string(base[0], true);
 	}
 	return ans;
 }
