@@ -43,7 +43,8 @@ LInt _recip_2(const LInt& A) {
 	}
 	int _2n = (A.d % 2 == 0) ? A.d : A.d + 1;
 	int _2k = (_2n + 2) / 4 * 2;
-	LInt _A, A2k(A.num + (_2n - _2k), _2k + A.d - _2n), _A2k, _rA;
+	LInt A2k(std::next(A.num.begin(), _2n - _2k), A.num.end());
+	LInt _A, _A2k, _rA;
 	_A2k = _recip_2(A2k);
 	_A2k <<= (_2n - _2k) / 2;
 	_A = (3 * _A2k).div2() - ((_A2k * _A2k * _A2k * A).div2() >> (2 * _2n));
@@ -122,7 +123,7 @@ LInt _recip_m(const LInt& A, int m) {
 	if (A.d <= m) return (powrt(A, m) << m) / A;
 	int n = (A.d + m - 1) / m;
 	int k = (n + 1) / 2;
-	LInt Ak(A.num + m * (n - k), A.d - m * (n - k));
+	LInt Ak(std::next(A.num.begin(), (n - k) * m), A.num.end());
 	LInt _Ak = _recip_m(Ak, m);
 	_Ak <<= n - k;
 	LInt _AN = pow(A, m - 1), base = LInt(n * m * m);
