@@ -45,24 +45,24 @@ struct LFloat {
 	// overload operator to calc
 	LFloat operator+(void) const;
 	LFloat operator-(void) const;
-	LFloat operator+(const LFloat&) const;
-	LFloat operator-(const LFloat&) const;
-	LFloat operator*(const LFloat&) const;
-	LFloat operator/(const LFloat&) const;
-	LFloat& operator+=(const LFloat&);
-	LFloat& operator-=(const LFloat&);
-	LFloat& operator*=(const LFloat&);
-	LFloat& operator/=(const LFloat&);
+	LFloat operator+(LFloat) const;
+	LFloat operator-(LFloat) const;
+	LFloat operator*(LFloat) const;
+	LFloat operator/(LFloat) const;
+	LFloat& operator+=(LFloat);
+	LFloat& operator-=(LFloat);
+	LFloat& operator*=(LFloat);
+	LFloat& operator/=(LFloat);
 
 	LFloat operator*(int) const;
 	LFloat operator/(int) const;
 	// compare operator
-	inline bool operator==(const LFloat&) const;
-	inline bool operator!=(const LFloat&) const;
-	bool operator<(const LFloat&) const;
-	inline bool operator>(const LFloat&) const;
-	inline bool operator<=(const LFloat&) const;
-	inline bool operator>=(const LFloat&) const;
+	inline bool operator==(LFloat) const;
+	inline bool operator!=(LFloat) const;
+	bool operator<(LFloat) const;
+	inline bool operator>(LFloat) const;
+	inline bool operator<=(LFloat) const;
+	inline bool operator>=(LFloat) const;
 	// other functions
 	LFloat pow2() const;
 	// precision for LFloat

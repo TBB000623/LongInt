@@ -185,7 +185,7 @@ LFloat LFloat::operator-(void) const {
 }
 
 // binary operation
-LFloat LFloat::operator+(const LFloat& B) const {
+LFloat LFloat::operator+(LFloat B) const {
 	const LFloat& A = *this;
 	if (A.isNaN() || B.isNaN()) return false;
 	if (A.zero() || B.zero()) return A.zero() ? B : A;
@@ -202,8 +202,8 @@ LFloat LFloat::operator+(const LFloat& B) const {
 	return ans;
 }
 
-LFloat LFloat::operator-(const LFloat& B) const { return (*this) + (-B); }
-LFloat LFloat::operator*(const LFloat& B) const {
+LFloat LFloat::operator-(LFloat B) const { return (*this) + (-B); }
+LFloat LFloat::operator*(LFloat B) const {
 	const LFloat& A = *this;
 	// static int u= 0;
 	// u++;	std::cerr<<u<<endl;
@@ -218,7 +218,7 @@ LFloat LFloat::operator*(const LFloat& B) const {
 	return LFloat(ans_base, ans_pow);
 }
 
-LFloat LFloat::operator/(const LFloat& B) const {
+LFloat LFloat::operator/(LFloat B) const {
 	const LFloat& A = *this;
 	int n = _LFloat_prec;
 	if (A.abnormal() || B.abnormal()) return LFloat(A.base / B.base, 0);
@@ -237,17 +237,17 @@ LFloat LFloat::operator/(const LFloat& B) const {
 }
 
 // comparison
-bool LFloat::operator==(const LFloat& B) const {
+bool LFloat::operator==(LFloat B) const {
 	const LFloat& A = *this;
 	if (A.isNaN() || B.isNaN()) return false;
 	return (A.base == B.base) && (A.pow == B.pow);
 }
-bool LFloat::operator!=(const LFloat& B) const {
+bool LFloat::operator!=(LFloat B) const {
 	const LFloat& A = *this;
 	if (A.isNaN() || B.isNaN()) return true;
 	return !(A == B);
 }
-bool LFloat::operator<(const LFloat& B) const {
+bool LFloat::operator<(LFloat B) const {
 	const LFloat& A = *this;
 	if (A.isNaN() || B.isNaN()) return false;
 	if (A.pow == B.pow) return A.base < B.base;
@@ -260,27 +260,27 @@ bool LFloat::operator<(const LFloat& B) const {
 		return A.base < B_t;
 	}
 }
-bool LFloat::operator>(const LFloat& B) const {
+bool LFloat::operator>(LFloat B) const {
 	const LFloat& A = *this;
 	if (A.isNaN() || B.isNaN()) return false;
 	return B < A;
 }
-bool LFloat::operator<=(const LFloat& B) const {
+bool LFloat::operator<=(LFloat B) const {
 	const LFloat& A = *this;
 	if (A.isNaN() || B.isNaN()) return false;
 	return !(A > B);
 }
-bool LFloat::operator>=(const LFloat& B) const {
+bool LFloat::operator>=(LFloat B) const {
 	const LFloat& A = *this;
 	if (A.isNaN() || B.isNaN()) return false;
 	return !(A < B);
 }
 
 // shorthand assignment operation
-LFloat& LFloat::operator+=(const LFloat& B) { return *this = *this + B; }
-LFloat& LFloat::operator-=(const LFloat& B) { return *this = *this - B; }
-LFloat& LFloat::operator*=(const LFloat& B) { return *this = *this * B; }
-LFloat& LFloat::operator/=(const LFloat& B) { return *this = *this / B; }
+LFloat& LFloat::operator+=(LFloat B) { return *this = *this + B; }
+LFloat& LFloat::operator-=(LFloat B) { return *this = *this - B; }
+LFloat& LFloat::operator*=(LFloat B) { return *this = *this * B; }
+LFloat& LFloat::operator/=(LFloat B) { return *this = *this / B; }
 
 // binary operation with other P.O.D.
 LFloat LFloat::operator*(int B) const {
@@ -302,10 +302,10 @@ LFloat LFloat::operator/(int B) const {
 	return LFloat((A.base << k) / B, A.pow - k);
 }
 
-LFloat operator+(double A, const tbb::LFloat& B) { return tbb::LFloat(A) + B; }
-LFloat operator-(double A, const tbb::LFloat& B) { return tbb::LFloat(A) - B; }
-LFloat operator*(double A, const tbb::LFloat& B) { return tbb::LFloat(A) * B; }
-LFloat operator/(double A, const tbb::LFloat& B) { return tbb::LFloat(A) / B; }
+LFloat operator+(double A, LFloat B) { return LFloat(A) + B; }
+LFloat operator-(double A, LFloat B) { return LFloat(A) - B; }
+LFloat operator*(double A, LFloat B) { return LFloat(A) * B; }
+LFloat operator/(double A, LFloat B) { return LFloat(A) / B; }
 
 // IO operators
 std::ostream& operator<<(std::ostream& os, const tbb::LFloat& A) {
