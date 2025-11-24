@@ -103,7 +103,7 @@ void LFloat::sho(void) {
 	}
 	if (base.d > prec) {
 		int delta = base.d - prec;
-		if (i64(pow) + delta > INT_MAX) pow = 0, base = (base.sign == 1) ? "inf" : "-inf";
+		if (i64(pow) + delta > INT_MAX) pow = 0, base = LInt(false, base.sign);
 		else base >>= delta, pow += delta;
 	}
 	int end_0;
@@ -111,7 +111,7 @@ void LFloat::sho(void) {
 		if (base[end_0] != 0) break;
 	if (end_0 > 0) {
 		base >>= end_0;
-		if (i64(pow) + end_0 > INT_MAX) pow = 0, base = (base.sign == 1) ? "inf" : "-inf";
+		if (i64(pow) + end_0 > INT_MAX) pow = 0, base = LInt(false, base.sign);
 		else pow += end_0;
 	}
 	return;
