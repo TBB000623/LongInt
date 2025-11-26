@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <cstring>
+#include <limits>
 #include <sstream>
 
 #include "LInt.h"
@@ -34,15 +35,223 @@ LFloat::LFloat(u64 u) : base(u), pow(0) {
 	base >>= zero;
 	pow += zero;
 }
-LFloat::LFloat(double d) : pow(0) {
-	static std::stringstream sio;
-	while (sio.peek() != -1) sio.get();
-	sio.clear();
-	sio.precision(308);
-	sio << d;
-	string s;
-	sio >> s;
-	*this = s;
+LFloat::LFloat(double d) : base(false), pow(0) {
+	// Handle special values first
+	if (std::isnan(d)) {
+		base = LInt(false);  // NaN
+		pow = 0;
+		return;
+	}
+	if (std::isinf(d)) {
+		base = LInt(false, std::signbit(d) ? -1 : 1);  // -inf / +inf
+		pow = 0;
+		return;
+	}
+	if (d == 0.0) {
+		base = LInt(0);
+		pow = 0;
+		return;
+	}
+
+	// Decompose IEEE-754 double into sign, exponent and mantissa
+	u64 bits = 0;
+	std::memcpy(&bits, &d, sizeof(bits));
+	bool neg = ((bits >> 63) & 1ULL) != 0;
+	int exp = int((bits >> 52) & 0x7FFULL);
+	u64 frac = bits & ((1ULL << 52) - 1ULL);
+
+	// Build integer mantissa and binary exponent such that
+	// value = mantissa * 2^{bin_exp}
+	u64 mant_u64 = 0;
+	int bin_exp = 0;
+	if (exp == 0) {  // subnormal
+		mant_u64 = frac;
+		bin_exp = 1 - 1023 - 52;
+	} else {  // normal
+		mant_u64 = (1ULL << 52) | frac;
+		bin_exp = exp - 1023 - 52;
+	}
+
+	LInt A(mant_u64);
+	if (neg) A.sign = -A.sign;
+
+	// decimal exponent (in base 10) offset
+	int dec_exp = 0;
+
+	if (bin_exp >= 0) {
+		// Multiply A by 2^{bin_exp} using fast exponentiation
+		LInt mul(1);
+		LInt cur(2);
+		int e = bin_exp;
+		while (e > 0) {
+			if (e & 1) mul *= cur;
+			cur *= cur;
+			e >>= 1;
+		}
+		A *= mul;
+	} else {
+		// 1 / 2^n = 5^n / 10^n -> multiply numerator by 5^n and
+		// subtract n from decimal exponent
+		int n = -bin_exp;
+		LInt mul(1);
+		LInt cur(5);
+		int e = n;
+		while (e > 0) {
+			if (e & 1) mul *= cur;
+			cur *= cur;
+			e >>= 1;
+		}
+		A *= mul;
+		dec_exp -= n;
+	}
+
+	// Convert decimal exponent into groups of 4 digits (this->pow counts 10^4 groups)
+	int exp_l = ((dec_exp % 4) + 4) % 4;
+	if (exp_l != 0) A *= pow10(exp_l);
+	dec_exp -= exp_l;
+	pow = dec_exp / 4;
+	base = A;
+	sho();
+}
+
+// Construct from float (single precision) without using streams
+LFloat::LFloat(float f) : base(false), pow(0) {
+	if (std::isnan(f)) {
+		base = LInt(false);
+		pow = 0;
+		return;
+	}
+	if (std::isinf(f)) {
+		base = LInt(false, std::signbit(f) ? -1 : 1);
+		pow = 0;
+		return;
+	}
+	if (f == 0.0f) {
+		base = LInt(0);
+		pow = 0;
+		return;
+	}
+
+	// Use frexp to get mantissa and exponent in binary
+	int e = 0;
+	long double m = std::frexpf(f, &e);  // f = m * 2^e, m in [0.5,1)
+	int digits = std::numeric_limits<float>::digits;  // typically 24
+
+	// Build integer mantissa by extracting binary digits
+	LInt A(0);
+	long double mm = fabsl(m);
+	for (int i = 0; i < digits; ++i) {
+		mm *= 2.0L;
+		A *= 2;  // multiply by 2 (bit shift)
+		if (mm >= 1.0L) {
+			A += LInt(1);
+			mm -= 1.0L;
+		}
+	}
+
+	int bin_exp = e - digits;
+	if (f < 0) A.sign = -A.sign;
+
+	int dec_exp = 0;
+	if (bin_exp >= 0) {
+		LInt mul(1);
+		LInt cur(2);
+		int ee = bin_exp;
+		while (ee > 0) {
+			if (ee & 1) mul *= cur;
+			cur *= cur;
+			ee >>= 1;
+		}
+		A *= mul;
+	} else {
+		int n = -bin_exp;
+		LInt mul(1);
+		LInt cur(5);
+		int ee = n;
+		while (ee > 0) {
+			if (ee & 1) mul *= cur;
+			cur *= cur;
+			ee >>= 1;
+		}
+		A *= mul;
+		dec_exp -= n;
+	}
+
+	int exp_l = ((dec_exp % 4) + 4) % 4;
+	if (exp_l != 0) A *= pow10(exp_l);
+	dec_exp -= exp_l;
+	pow = dec_exp / 4;
+	base = A;
+	sho();
+}
+
+// Construct from long double without using streams (build mantissa via frexpl)
+LFloat::LFloat(long double ld) : base(false), pow(0) {
+	if (std::isnan(ld)) {
+		base = LInt(false);
+		pow = 0;
+		return;
+	}
+	if (std::isinf(ld)) {
+		base = LInt(false, std::signbit(ld) ? -1 : 1);
+		pow = 0;
+		return;
+	}
+	if (ld == 0.0L) {
+		base = LInt(0);
+		pow = 0;
+		return;
+	}
+
+	int e = 0;
+	long double m = std::frexpl(ld, &e);  // ld = m * 2^e, m in [0.5, 1)
+	int digits = std::numeric_limits<long double>::digits;  // platform dependent
+
+	LInt A(0);
+	long double mm = fabsl(m);
+	for (int i = 0; i < digits; ++i) {
+		mm *= 2.0L;
+		A *= 2;
+		if (mm >= 1.0L) {
+			A += LInt(1);
+			mm -= 1.0L;
+		}
+	}
+
+	int bin_exp = e - digits;
+	if (ld < 0) A.sign = -A.sign;
+
+	int dec_exp = 0;
+	if (bin_exp >= 0) {
+		LInt mul(1);
+		LInt cur(2);
+		int ee = bin_exp;
+		while (ee > 0) {
+			if (ee & 1) mul *= cur;
+			cur *= cur;
+			ee >>= 1;
+		}
+		A *= mul;
+	} else {
+		int n = -bin_exp;
+		LInt mul(1);
+		LInt cur(5);
+		int ee = n;
+		while (ee > 0) {
+			if (ee & 1) mul *= cur;
+			cur *= cur;
+			ee >>= 1;
+		}
+		A *= mul;
+		dec_exp -= n;
+	}
+
+	int exp_l = ((dec_exp % 4) + 4) % 4;
+	if (exp_l != 0) A *= pow10(exp_l);
+	dec_exp -= exp_l;
+	pow = dec_exp / 4;
+	base = A;
+	sho();
 }
 LFloat::LFloat(const char* inString) : base(false), pow(0) {
 	using std::isdigit;
@@ -84,7 +293,7 @@ LFloat::LFloat(const char* inString) : base(false), pow(0) {
 	sho();
 }
 LFloat::LFloat(const string& S) { *this = S.c_str(); }
-LFloat::LFloat(const LInt& _b, int _p = 0) : base(_b), pow(_p) { sho(); }
+LFloat::LFloat(const LInt& _b, int _p) : base(_b), pow(_p) { sho(); }
 
 // basic proporties
 bool LFloat::isNaN(void) const { return base.isNaN(); }

@@ -24,7 +24,9 @@ struct LFloat {
 	LFloat(int);
 	LFloat(i64);
 	LFloat(u64);
+	LFloat(float);
 	LFloat(double);
+	LFloat(long double);
 	LFloat(const char*);
 	LFloat(const string& S);
 	LFloat(const LInt& _b, int _p = 0);
