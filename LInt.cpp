@@ -920,12 +920,7 @@ std::ostream& operator<<(std::ostream& os, const LInt& A) {
 		if (A.isinf()) os.write("inf", 3);
 		else {
 			os << A.num[A.d - 1];
-			for (int i = A.d - 2; i >= 0; i--) {
-				if (A.num[i] < 10) os.put('0');
-				if (A.num[i] < 100) os.put('0');
-				if (A.num[i] < 1000) os.put('0');
-				os << A.num[i];
-			}
+			for (int i = A.d - 2; i >= 0; i--) os << u32_to_zero_padded_string(A.num[i]);
 		}
 	}
 	return os;
