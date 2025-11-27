@@ -200,10 +200,10 @@ void circ_conv(const std::vector<double>& A, const std::vector<double>& B, std::
 	using std::vector;
 
 	if (n <= 2048) {
-		for (register int t = 0; t < n; ++t) {
-			C[t] = 0;
-			for (int i = 0; i <= t; ++i) C[t] += A[i] * B[t - i];
-			for (int i = n - 1; i >= t + 1; --i) C[t] += A[i] * B[n + t - i];
+		C.assign(n, 0);
+		for (int i = 0; i < n; ++i) {
+			for (int j = 0; j < n - i; ++j) C[i + j] += A[i] * B[j];
+			for (int j = n - i; j < n; ++j) C[i + j - n] += A[i] * B[j];
 		}
 		return;
 	}
