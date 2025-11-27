@@ -199,7 +199,7 @@ void DFT(const std::vector<complex>& A, std::vector<complex>& a, int n, bool inv
 void circ_conv(const std::vector<double>& A, const std::vector<double>& B, std::vector<double>& C, int n) {
 	using std::vector;
 
-	if (n <= 1024) {
+	if (n <= 2048) {
 		for (register int t = 0; t < n; ++t) {
 			C[t] = 0;
 			for (int i = 0; i <= t; ++i) C[t] += A[i] * B[t - i];
@@ -741,7 +741,7 @@ LInt LInt::operator*(LInt B) const {
 	ans.num.assign(ans.d, 0);
 	ans.sign = A.sign * B.sign;
 	std::vector<double> c(N, 0);
-	if (A.d <= Log_2(B.d) || Log_2(A.d) >= B.d) {
+	if (double(A.d) * double(B.d) <= double(N) * std::log2(double(N))) {
 		for (x = 0; x < A.d; x++)
 			for (y = 0; y < B.d; y++) c[x + y] += A.num[x] * B.num[y];
 	} else {
