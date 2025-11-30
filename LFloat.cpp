@@ -134,7 +134,7 @@ LFloat::LFloat(float f) : base(false), pow(0) {
 
 	// Use frexp to get mantissa and exponent in binary
 	int e = 0;
-	long double m = std::frexpf(f, &e);  // f = m * 2^e, m in [0.5,1)
+	long double m = std::frexpf(f, &e);
 	int digits = std::numeric_limits<float>::digits;  // typically 24
 
 	// Build integer mantissa by extracting binary digits
@@ -204,7 +204,7 @@ LFloat::LFloat(long double ld) : base(false), pow(0) {
 	}
 
 	int e = 0;
-	long double m = std::frexpl(ld, &e);  // ld = m * 2^e, m in [0.5, 1)
+	long double m = std::frexpl(ld, &e);                    // ld = m * 2^e, m in [0.5, 1)
 	int digits = std::numeric_limits<long double>::digits;  // platform dependent
 
 	LInt A(0);
@@ -366,7 +366,7 @@ LFloat::LFloat(const char* float_string) : base(false), pow(0) {
 	pow = exp_value / 4;
 	sho();
 }
-LFloat::LFloat(const string& S) { *this = S.c_str(); }
+LFloat::LFloat(string S) { *this = S.c_str(); }
 LFloat::LFloat(const LInt& _b, int _p) : base(_b), pow(_p) { sho(); }
 
 // basic proporties
