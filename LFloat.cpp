@@ -253,43 +253,117 @@ LFloat::LFloat(long double ld) : base(false), pow(0) {
 	base = A;
 	sho();
 }
-LFloat::LFloat(const char* inString) : base(false), pow(0) {
-	using std::isdigit;
-	const char*& inS = inString;
-	bool dot = false, scientific = false, fail = false;
-	int dot_pt = 0, sci_pt = 0, exp = 0, exp_l = 0, len;
-	char sign = 0;
-	for (const char* t = inString; *t != '\0' && !fail; t++) {
-		if (!isdigit(*t) && !(*t == '+' || *t == '-') && !(t != inS && (*t == 'E' || *t == 'e')) && *t != '.') fail = true;
-		else {
-			if (*t == '+' || *t == '-') {
-				if (sign == 0 && t == inS) sign = *t, inString++;
-				else if (scientific && t - (inS + sci_pt) == 1)
-					;
-				else fail = true;
-			} else if (*t == 'E' || *t == 'e') {
-				if (scientific) fail = true;
-				if (!scientific) scientific = true, sci_pt = t - inS;
-				if (sci_pt == 0) fail = true;
-			} else if (*t == '.') {
-				if (dot || scientific) fail = true;
-				else dot = true, dot_pt = t - inS;
-			}
+
+struct FloatParseResult {
+	bool valid;
+	char sign;
+	int integer_position;
+	int dot_position;
+	int fractional_position;
+	int mantissa_end_position;
+	int exponent_position;
+	int end_position;
+	std::string mantissa_string;
+};
+
+FloatParseResult parse_float_string(const char* str) {
+	FloatParseResult result;
+	result.valid = true;
+	result.sign = 0;
+	result.integer_position = -1;
+	result.dot_position = -1;
+	result.fractional_position = -1;
+	result.mantissa_end_position = -1;
+	result.exponent_position = -1;
+	result.end_position = -1;
+	result.mantissa_string = "";
+
+	const char* p = str;
+	// parse sign
+	if (*p == '+' || *p == '-') {
+		result.sign = *p;
+		p++;
+	} else {
+		result.sign = '+';
+	}
+	// parse integer part
+	bool has_integer = false;
+	while (isdigit(*p)) {
+		if (!has_integer) result.integer_position = p - str;
+		has_integer = true;
+		p++;
+	}
+	if (has_integer) {
+		result.mantissa_string.append(str + result.integer_position, p - (str + result.integer_position));
+		result.mantissa_end_position = p - str;
+	}
+
+	bool has_fractional = false;
+	if (*p == '.') {
+		result.dot_position = p - str;
+		p++;
+		while (isdigit(*p)) {
+			if (!has_fractional) result.fractional_position = p - str;
+			has_fractional = true;
+			p++;
+		}
+		if (has_fractional) {
+			result.mantissa_string.append(str + result.fractional_position, p - (str + result.fractional_position));
+			result.mantissa_end_position = p - str;
 		}
 	}
-	if (fail) return;
-	len = strlen(inString);
-	if (!scientific) sci_pt = len;
-	if (!dot) dot_pt = sci_pt;
-	exp = (scientific) ? atoi(inS + sci_pt + 1) : 0;
-	if (sign == 0) sign = '+';
-	string s0(1, sign), s1(inS, dot_pt);
-	if (dot) s1 += string(inS + dot_pt + 1, sci_pt - dot_pt - 1);
-	if (dot) exp -= sci_pt - dot_pt - 1;
-	exp_l = ((exp % 4) + 4) % 4;
-	exp -= exp_l;
-	base = LInt(s0 + s1) * pow10(exp_l);
-	pow = exp / 4;
+
+	// 必须至少有整数或小数部分
+	if (!has_integer && !has_fractional) {
+		result.valid = false;
+		return result;
+	}
+
+	// parse exponent part
+	if (*p == 'e' || *p == 'E') {
+		const char* exp_start = p;
+		p++;
+		if (*p == '+' || *p == '-') {
+			p++;
+		}
+		// 检查 E 后是否有数字
+		const char* exp_digit_start = p;
+		while (isdigit(*p)) {
+			p++;
+		}
+		// 只有 E 后有数字时才算有效指数
+		if (p > exp_digit_start) {
+			result.exponent_position = exp_start - str;
+		} else {
+			// E 后没有数字，回退到 E 之前
+			p = exp_start;
+		}
+	}
+	result.end_position = p - str;
+	return result;
+}
+
+LFloat::LFloat(const char* float_string) : base(false), pow(0) {
+	FloatParseResult parse_result = parse_float_string(float_string);
+	if (!parse_result.valid) return;
+
+	int exp_value = 0;
+	if (parse_result.exponent_position != -1) {
+		exp_value = std::strtol(float_string + parse_result.exponent_position + 1, nullptr, 10);
+	}
+	if (parse_result.fractional_position != -1) {
+		exp_value -= (parse_result.mantissa_end_position - parse_result.fractional_position);
+	}
+
+	int exp_l = ((exp_value % 4) + 4) % 4;
+	exp_value -= exp_l;
+
+	string num_str(1, parse_result.sign);
+	num_str += parse_result.mantissa_string;
+	num_str.append(exp_l, '0');
+
+	base = LInt(num_str);
+	pow = exp_value / 4;
 	sho();
 }
 LFloat::LFloat(const string& S) { *this = S.c_str(); }

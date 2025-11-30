@@ -28,7 +28,7 @@ struct LFloat {
 	LFloat(double);
 	LFloat(long double);
 	LFloat(const char*);
-	LFloat(const string& S);
+	LFloat(string S);
 	LFloat(const LInt& _b, int _p = 0);
 
    public:
