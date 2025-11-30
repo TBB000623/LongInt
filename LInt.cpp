@@ -137,7 +137,7 @@ void DFT(const std::vector<complex>& A, std::vector<complex>& a, int n, bool inv
 	if (rt.size() < n) rt.resize(n);
 	if (temp.size() < n) temp.resize(n);
 
-	for (register int i = 0; i < n; i++) temp[i] = A[rev[i]];
+	for (int i = 0; i < n; i++) temp[i] = A[rev[i]];
 
 	for (int i = 0, size = 1; i < factor_list.size(); ++i) {
 		int scale = factor_list[i], new_size = size * scale;
@@ -192,7 +192,7 @@ void DFT(const std::vector<complex>& A, std::vector<complex>& a, int n, bool inv
 	}
 
 	if (inv)
-		for (register int i = 0; i < n; i++) temp[i] = temp[i] / n;
+		for (int i = 0; i < n; i++) temp[i] = temp[i] / n;
 	a = temp;
 }
 
@@ -226,11 +226,11 @@ void circ_conv(const std::vector<double>& A, const std::vector<double>& B, std::
 	checkA = (A_0 == A);
 	if (!checkA) {
 		A_0 = A;
-		for (register int i = 0; i < n / 2; i++) P[i] = cmxd{A[i << 1], A[(i << 1) | 1]};
+		for (int i = 0; i < n / 2; i++) P[i] = cmxd{A[i << 1], A[(i << 1) | 1]};
 		DFT(P, P, n / 2, false);
 		Q[0] = P[0].conj();
-		for (register int i = 1; i < n / 2; i++) Q[i] = P[n / 2 - i].conj();
-		for (register int i = 0; i < n / 2; i++) a_0[i] = (P[i] + Q[i]) / 2, a_1[i] = ((P[i] - Q[i]) / 2).left();
+		for (int i = 1; i < n / 2; i++) Q[i] = P[n / 2 - i].conj();
+		for (int i = 0; i < n / 2; i++) a_0[i] = (P[i] + Q[i]) / 2, a_1[i] = ((P[i] - Q[i]) / 2).left();
 	}
 
 	checkAB = (A == B);
@@ -239,21 +239,21 @@ void circ_conv(const std::vector<double>& A, const std::vector<double>& B, std::
 		checkB = (B_0 == B);
 		if (!checkB) {
 			B_0 = B;
-			for (register int i = 0; i < n / 2; i++) P[i] = cmxd{B[i << 1], B[(i << 1) | 1]};
+			for (int i = 0; i < n / 2; i++) P[i] = cmxd{B[i << 1], B[(i << 1) | 1]};
 			DFT(P, P, n / 2, false);
 			Q[0] = P[0].conj();
-			for (register int i = 1; i < n / 2; i++) Q[i] = P[n / 2 - i].conj();
-			for (register int i = 0; i < n / 2; i++) b_0[i] = (P[i] + Q[i]) / 2, b_1[i] = ((P[i] - Q[i]) / 2).left();
+			for (int i = 1; i < n / 2; i++) Q[i] = P[n / 2 - i].conj();
+			for (int i = 0; i < n / 2; i++) b_0[i] = (P[i] + Q[i]) / 2, b_1[i] = ((P[i] - Q[i]) / 2).left();
 		}
 	}
 
-	for (register int i = 0; i < n / 2; i++) {
+	for (int i = 0; i < n / 2; i++) {
 		c_0[i] = a_0[i] * b_0[i] + a_1[i] * b_1[i] * root_table(i, n / 2);
 		c_1[i] = a_0[i] * b_1[i] + a_1[i] * b_0[i];
 	}
-	for (register int i = 0; i < n / 2; i++) P[i] = c_0[i] + c_1[i].right();
+	for (int i = 0; i < n / 2; i++) P[i] = c_0[i] + c_1[i].right();
 	DFT(P, P, n / 2, true);
-	for (register int i = 0; i < n / 2; i++) C[i << 1] = P[i].x, C[(i << 1) | 1] = P[i].y;
+	for (int i = 0; i < n / 2; i++) C[i << 1] = P[i].x, C[(i << 1) | 1] = P[i].y;
 	last_n = n;
 }
 
@@ -735,7 +735,7 @@ LInt LInt::operator*(LInt B) const {
 	if (B.isinf()) return (A.sign > 0) ? B : -B;
 	if (A.zero() || B.zero()) return 0;
 	LInt ans;
-	register int x, y;
+	int x, y;
 	int N = _conv_length(A.d + B.d - 1);
 	ans.d = N + 2;
 	ans.num.assign(ans.d, 0);
